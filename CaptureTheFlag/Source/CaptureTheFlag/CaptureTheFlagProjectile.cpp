@@ -34,7 +34,7 @@ ACaptureTheFlagProjectile::ACaptureTheFlagProjectile()
     ParticleFX = Particle.Object;
 
     // Die after 3 seconds by default
-    //InitialLifeSpan = 3.0f;
+    InitialLifeSpan = 3.0f;
 }
 
 void ACaptureTheFlagProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
@@ -52,9 +52,10 @@ void ACaptureTheFlagProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* Othe
 
             Player->Health--;
         }
-
-        Destroy();
     }
+
+    Destroy();
+
 }
 
 void ACaptureTheFlagProjectile::OnExplode()

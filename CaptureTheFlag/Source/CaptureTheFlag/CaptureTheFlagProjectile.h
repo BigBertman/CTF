@@ -30,8 +30,8 @@ public:
     UFUNCTION()
         void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
-    UFUNCTION()
-        void OnExplode();
+    UFUNCTION(NetMulticast, Reliable)
+        void NMC_Explode();
 
     /** Returns CollisionComp subobject **/
     FORCEINLINE class USphereComponent* GetCollisionComp() const { return CollisionComp; }

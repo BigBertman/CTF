@@ -34,7 +34,10 @@ ACaptureTheFlagProjectile::ACaptureTheFlagProjectile()
     ParticleFX = Particle.Object;
 
     // Die after 3 seconds by default
-    InitialLifeSpan = 3.0f;
+    //InitialLifeSpan = 3.0f;
+
+    SetReplicates(true);
+    SetReplicateMovement(true);
 }
 
 void ACaptureTheFlagProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
@@ -44,22 +47,21 @@ void ACaptureTheFlagProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* Othe
     {
         OtherComp->AddImpulseAtLocation(GetVelocity() * 100.0f, GetActorLocation());
 
+
         ACaptureTheFlagCharacter* Player = Cast<ACaptureTheFlagCharacter>(OtherActor);
 
         if (Player != nullptr)
         {
-            OnExplode();
-
             Player->Health--;
         }
     }
 
-    Destroy();
+    NMC_Explode();
 
+    Destroy();
 }
 
-void ACaptureTheFlagProjectile::OnExplode()
+void ACaptureTheFlagProjectile::NMC_Explode_Implementation()
 {
-    UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ParticleFX, GetActorLocation());
-
+    // UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ParticleFX, GetActorLocation());
 }

@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "CaptureTheFlagCharacter.h"
+#include "../CaptureTheFlag.h"
 #include "../CaptureTheFlagProjectile.h"
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
@@ -11,16 +12,29 @@
 #include "Kismet/GameplayStatics.h"
 #include "MotionControllerComponent.h"
 #include "XRMotionControllerBase.h" // for FXRMotionControllerBase::RightHandSourceId
+#include "CharacterBaseAnimation.h"
+#include <GameFramework/PlayerController.h>
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Net/UnrealNetwork.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogFPChar, Warning, All);
 
 //////////////////////////////////////////////////////////////////////////
 // ACaptureTheFlagCharacter
 
-ACaptureTheFlagCharacter::ACaptureTheFlagCharacter()
+ACaptureTheFlagCharacter::ACaptureTheFlagCharacter() :
+    SkeletalMesh(nullptr),
+    AnimationInstance(nullptr)
 {
+    PrimaryActorTick.bCanEverTick = true;
+
     // Set size for collision capsule
     GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
+
+    // GetCharacterMovement()->MaxWalkSpeed = 280.0f;
+
+    GetMesh()->SetOwnerNoSee(true);
+    GetMesh()->SetIsReplicated(true);
 
     // set our turn rates for input
     BaseTurnRate = 45.f;
@@ -56,6 +70,16 @@ ACaptureTheFlagCharacter::ACaptureTheFlagCharacter()
     // Default offset from the character location for projectiles to spawn
     GunOffset = FVector(100.0f, 0.0f, 10.0f);
 
+
+    // Create a gun mesh component
+    TP_Gun = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("TP_Gun"));
+    //TP_Gun->SetOnlyOwnerSee(true);			// only the owning player will see this mesh
+    TP_Gun->SetOwnerNoSee(true);
+    TP_Gun->bCastDynamicShadow = false;
+    TP_Gun->CastShadow = false;
+    TP_Gun->SetIsReplicated(true);
+    TP_Gun->SetupAttachment(RootComponent);
+
     // Note: The ProjectileClass and the skeletal mesh/anim blueprints for Mesh1P, FP_Gun, and VR_Gun 
     // are set in the derived blueprint asset named MyCharacter to avoid direct content references in C++.
 
@@ -74,14 +98,35 @@ ACaptureTheFlagCharacter::ACaptureTheFlagCharacter()
     VR_Gun->CastShadow = false;
     VR_Gun->SetupAttachment(R_MotionController);
     VR_Gun->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
+    VR_Gun->SetIsReplicated(true);
 
     VR_MuzzleLocation = CreateDefaultSubobject<USceneComponent>(TEXT("VR_MuzzleLocation"));
     VR_MuzzleLocation->SetupAttachment(VR_Gun);
     VR_MuzzleLocation->SetRelativeLocation(FVector(0.000004, 53.999992, 10.000000));
-    VR_MuzzleLocation->SetRelativeRotation(FRotator(0.0f, 90.0f, 0.0f));		// Counteract the rotation of the VR gun model.
+    VR_MuzzleLocation->SetRelativeRotation(FRotator(0.0f, 90.0f, 0.0f));		// Counteract the rotation of the VR gun model.    
 
     // Uncomment the following line to turn motion controllers on by default:
-    //bUsingMotionControllers = true;
+//bUsingMotionControllers = true;
+
+    FireRate = 10.0f;
+
+    bReplicates = true;
+    SetReplicates(true);
+    SetReplicateMovement(true);
+    GetCharacterMovement()->SetIsReplicated(true);
+    GetCharacterMovement()->SetNetAddressable();
+}
+
+void ACaptureTheFlagCharacter::PostInitializeComponents()
+{
+    Super::PostInitializeComponents();
+
+    SkeletalMesh = GetMesh();
+    if (SkeletalMesh != nullptr)
+    {
+        // Retrieve the animation instance.
+        AnimationInstance = Cast<UCharacterBaseAnimation>(SkeletalMesh->GetAnimInstance());
+    }
 }
 
 void ACaptureTheFlagCharacter::BeginPlay()
@@ -91,6 +136,7 @@ void ACaptureTheFlagCharacter::BeginPlay()
 
     //Attach gun mesh component to Skeleton, doing it here because the skeleton is not yet created in the constructor
     FP_Gun->AttachToComponent(Mesh1P, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
+    TP_Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("WeaponSocket"));
 
     // Show or hide the two versions of the gun based on whether or not we're using motion controllers.
     if (bUsingMotionControllers)
@@ -105,6 +151,36 @@ void ACaptureTheFlagCharacter::BeginPlay()
     }
 }
 
+void ACaptureTheFlagCharacter::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+
+    // Set animation movement parameters.
+    float CurrentSpeed = GetVelocity().Size();
+    bool bIsMoving = CurrentSpeed > 0.0f && GetCharacterMovement()->IsMovingOnGround();
+
+    AnimationInstance->bIsMoving = bIsMoving;
+    AnimationInstance->MovementSpeed = bIsMoving ? CurrentSpeed : 0.0f;
+
+    // Set animation strafing rotation paremeter.
+    FVector MovementDirection = GetLastMovementInputVector();
+    FVector CharacterDirection = GetActorForwardVector();
+
+    if (!MovementDirection.IsNearlyZero())
+    {
+        float StrafingRotation = FMath::Atan2(MovementDirection.Y, MovementDirection.X) - FMath::Atan2(CharacterDirection.Y, CharacterDirection.X);
+
+        if (FMath::Abs(StrafingRotation) > PI)
+        {
+            StrafingRotation = StrafingRotation > 0 ? StrafingRotation - PI * 2.0f : StrafingRotation + PI * 2.0f;
+        }
+
+        StrafingRotation = FMath::RadiansToDegrees(StrafingRotation);
+
+        AnimationInstance->StrafingRotation = StrafingRotation;
+    }
+}
+
 //////////////////////////////////////////////////////////////////////////
 // Input
 
@@ -115,9 +191,50 @@ void ACaptureTheFlagCharacter::SetupPlayerInputComponent(class UInputComponent* 
 
     // Bind fire event
     PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ACaptureTheFlagCharacter::OnFire);
+    PlayerInputComponent->BindAction("Fire", IE_Released, this, &ACaptureTheFlagCharacter::StopFire);
+
 }
 
-void ACaptureTheFlagCharacter::OnFire()
+void ACaptureTheFlagCharacter::NMC_PlayWeaponFiringAnimation_Implementation()
+{
+    AnimationInstance->Montage_Play(FireAnimation);
+    AnimationInstance->Montage_Play(FireAnimationTP);
+
+    // try and play the sound if specified
+    if (FireSound != NULL)
+    {
+        UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
+    }
+
+    // try and play a firing animation if specified
+    //if (FireAnimation != NULL)
+    //{
+    //    // Get the animation object for the arms mesh
+    //    UAnimInstance* AnimInstance = Mesh1P->GetAnimInstance();
+    //    if (AnimInstance != NULL)
+    //    {
+    //        AnimInstance->Montage_Play(FireAnimation, 1.f);
+    //    }
+    //}
+
+    // try and play a firing animation if specified
+    //if (FireAnimationTP != NULL)
+    //{
+    //    // Get the animation object for the arms mesh
+    //    UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+    //    if (AnimInstance != NULL)
+    //    {
+    //        AnimInstance->Montage_Play(FireAnimationTP, 1.f);
+    //    }
+    //}
+}
+
+bool ACaptureTheFlagCharacter::Server_Fire_Validate()
+{
+    return true;
+}
+
+void ACaptureTheFlagCharacter::Server_Fire_Implementation()
 {
     // try and fire a projectile
     if (ProjectileClass != NULL)
@@ -143,26 +260,45 @@ void ACaptureTheFlagCharacter::OnFire()
 
                 // spawn the projectile at the muzzle
                 World->SpawnActor<ACaptureTheFlagProjectile>(ProjectileClass, SpawnLocation, SpawnRotation, ActorSpawnParams);
+
+               // FVector MuzzleLocation = TP_Gun->GetSocketLocation("Muzzle") + SpawnRotation.RotateVector(GunOffset);
+
+                //World->SpawnActor<ACaptureTheFlagProjectile>(ProjectileClass, MuzzleLocation, SpawnRotation, ActorSpawnParams);
+
+
             }
         }
     }
 
-    // try and play the sound if specified
-    if (FireSound != NULL)
-    {
-        UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
-    }
+    NMC_PlayWeaponFiringAnimation();
+}
 
-    // try and play a firing animation if specified
-    if (FireAnimation != NULL)
+void ACaptureTheFlagCharacter::OnFire()
+{
+
+    auto& TimerManager = GetWorld()->GetTimerManager();
+
+    // Start the firing timer and use the remaining time of the previous timer.
+    float RemainingTime = FMath::Max(TimerManager.GetTimerRemaining(FireTimer), 0.0f);
+    TimerManager.SetTimer(FireTimer, this, &ACaptureTheFlagCharacter::Server_Fire, 1.0f / FireRate, true, RemainingTime);
+}
+
+void ACaptureTheFlagCharacter::StopFire()
+{
+    auto& TimerManager = GetWorld()->GetTimerManager();
+
+    // Replace timer with one that will prevent the primary fire timer from triggering again too quickly.
+    if (TimerManager.TimerExists(FireTimer))
     {
-        // Get the animation object for the arms mesh
-        UAnimInstance* AnimInstance = Mesh1P->GetAnimInstance();
-        if (AnimInstance != NULL)
-        {
-            AnimInstance->Montage_Play(FireAnimation, 1.f);
-        }
+        float RemainingTime = TimerManager.GetTimerRemaining(FireTimer);
+        TimerManager.SetTimer(FireTimer, this, &ACaptureTheFlagCharacter::ClearFireTimer, RemainingTime, false);
     }
+}
+
+void ACaptureTheFlagCharacter::ClearFireTimer()
+{
+    // Clear the timer after a delay set in ReleaseTrigger() function.
+    GetWorld()->GetTimerManager().ClearTimer(FireTimer);
 }
 
 void ACaptureTheFlagCharacter::OnResetVR()
@@ -178,7 +314,7 @@ void ACaptureTheFlagCharacter::BeginTouch(const ETouchIndex::Type FingerIndex, c
     }
     if ((FingerIndex == TouchItem.FingerIndex) && (TouchItem.bMoved == false))
     {
-        OnFire();
+        Server_Fire();
     }
     TouchItem.bIsPressed = true;
     TouchItem.FingerIndex = FingerIndex;
@@ -276,4 +412,10 @@ bool ACaptureTheFlagCharacter::EnableTouchscreenMovement(class UInputComponent* 
     }
 
     return false;
+}
+
+void ACaptureTheFlagCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(ACaptureTheFlagCharacter, FireRate);
 }

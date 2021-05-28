@@ -22,6 +22,10 @@ public:
     UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
         class USkeletalMeshComponent* FP_Gun;
 
+    /** Gun mesh: 3st person view (seen only by self) */
+    UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
+        class USkeletalMeshComponent* TP_Gun;
+
     /** Location on gun mesh where projectiles should spawn. */
     UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
         class USceneComponent* FP_MuzzleLocation;
@@ -50,7 +54,15 @@ public:
     ACaptureTheFlagCharacter();
 
 protected:
-    virtual void BeginPlay();
+    virtual void BeginPlay() override;
+    virtual void Tick(float DeltaTime) override;
+    virtual void PostInitializeComponents() override;
+
+    UFUNCTION(NetMulticast, Unreliable)
+        void NMC_PlayWeaponFiringAnimation();
+
+    UFUNCTION(Server, Reliable, WithValidation)
+        void Server_Fire();
 
 public:
     /** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
@@ -77,13 +89,22 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
         class UAnimMontage* FireAnimation;
 
+    /** AnimMontage to play each time we fire */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
+        class UAnimMontage* FireAnimationTP;
+
     /** Whether to use motion controller location for aiming. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
         uint32 bUsingMotionControllers : 1;
 
+    UPROPERTY(Replicated, EditDefaultsOnly)
+        float FireRate;
+
 public:
     /** Fires a projectile. */
     void OnFire();
+
+    void StopFire();
 
     /** Resets HMD orientation and position in VR. */
     void OnResetVR();
@@ -141,5 +162,12 @@ public:
     UPROPERTY(EditAnywhere, Category = "Health")
         int Health = 5;
 
+
+private:
+    void ClearFireTimer();
+
+    FTimerHandle FireTimer;
+    class UCharacterBaseAnimation* AnimationInstance;
+    class USkeletalMeshComponent* SkeletalMesh;
 };
 

@@ -51,11 +51,6 @@ void ACTFPlayerController::AcknowledgePossession(APawn* PossessedPawn)
         InputComponent->BindAxis("MoveForward", Character, &ACaptureTheFlagCharacter::MoveForward);
         InputComponent->BindAxis("MoveRight", Character, &ACaptureTheFlagCharacter::MoveRight);
 
-        InputComponent->BindAction("ResetVR", IE_Pressed, Character, &ACaptureTheFlagCharacter::OnResetVR);
-
-        // Enable touchscreen input
-        Character->EnableTouchscreenMovement(InputComponent);
-
         // We have 2 versions of the rotation bindings to handle different kinds of devices differently
         // "turn" handles devices that provide an absolute delta, such as a mouse.
         // "turnrate" is for devices that we choose to treat as a rate of change, such as an analog joystick

@@ -3,10 +3,18 @@
 
 #include "CTFPlayerController.h"
 #include "CaptureTheFlagCharacter.h"
+#include "../UI/PlayerWidget.h"
 
 void ACTFPlayerController::BeginPlay()
 {
     Super::BeginPlay();
+
+    if (GameInfoBP != nullptr && IsLocalController())
+    {
+        GameInfoWidget = CreateWidget<UPlayerWidget>(this, GameInfoBP);
+        GameInfoWidget->AddToViewport();
+         GameInfoWidget->UpdateHealthBar();
+    }
 }
 
 void ACTFPlayerController::OnPossess(APawn* aPawn)
@@ -58,5 +66,15 @@ void ACTFPlayerController::AcknowledgePossession(APawn* PossessedPawn)
         InputComponent->BindAxis("TurnRate", Character, &ACaptureTheFlagCharacter::TurnAtRate);
         InputComponent->BindAxis("LookUp", Character, &APawn::AddControllerPitchInput);
         InputComponent->BindAxis("LookUpRate", Character, &ACaptureTheFlagCharacter::LookUpAtRate);
+    }
+}
+
+void ACTFPlayerController::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+
+    if (GameInfoWidget != nullptr)
+    {
+        GameInfoWidget->UpdateHealthBar();
     }
 }

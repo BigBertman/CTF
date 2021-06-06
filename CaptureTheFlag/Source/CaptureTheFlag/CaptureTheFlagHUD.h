@@ -9,17 +9,17 @@
 UCLASS()
 class ACaptureTheFlagHUD : public AHUD
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	ACaptureTheFlagHUD();
+    ACaptureTheFlagHUD();
 
-	/** Primary draw call for the HUD */
-	virtual void DrawHUD() override;
+    /** Primary draw call for the HUD */
+    virtual void DrawHUD() override;
 
 private:
-	/** Crosshair asset pointer */
-	class UTexture2D* CrosshairTex;
+    /** Crosshair asset pointer */
+    class UTexture2D* CrosshairTex;
 
 };
 

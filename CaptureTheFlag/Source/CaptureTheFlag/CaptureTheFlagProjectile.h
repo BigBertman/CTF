@@ -20,22 +20,23 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
         class UProjectileMovementComponent* ProjectileMovement;
 
-    UPROPERTY(VisibleAnywhere, Category = Projectile)
-        class UParticleSystem* ParticleFX;
+    UPROPERTY(EditDefaultsOnly)
+        float Damage;
 
 public:
     ACaptureTheFlagProjectile();
 
     /** called when projectile hits something */
     UFUNCTION()
-        void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
-
-    UFUNCTION(NetMulticast, Reliable)
-        void NMC_Explode();
+        void OnActorHit(AActor* Self, AActor* Other, FVector NormalImpulse, const FHitResult& Hit);
 
     /** Returns CollisionComp subobject **/
     FORCEINLINE class USphereComponent* GetCollisionComp() const { return CollisionComp; }
     /** Returns ProjectileMovement subobject **/
     FORCEINLINE class UProjectileMovementComponent* GetProjectileMovement() const { return ProjectileMovement; }
+
+protected:
+    virtual void PostInitializeComponents() override;
+
 };
 

@@ -15,12 +15,8 @@ class ACaptureTheFlagCharacter : public ACharacter
 
 public:
     /** Pawn mesh: 1st person view (arms; seen only by self) */
-    UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
-        class USkeletalMeshComponent* Mesh1P;
-
-    /** Gun mesh: 1st person view (seen only by self) */
-    UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
-        class USkeletalMeshComponent* FP_Gun;
+    //UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
+    //    class USkeletalMeshComponent* Mesh1P;
 
     /** Gun mesh: 3st person view (seen only by self) */
     UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
@@ -30,9 +26,15 @@ public:
     UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
         class USceneComponent* FP_MuzzleLocation;
 
-    /** First person camera */
+    /** Follow camera */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-        class UCameraComponent* FirstPersonCameraComponent;
+        class UCameraComponent* OverShoulderCamera;
+
+    /** Camera boom positioning the camera behind the character */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+        class USpringArmComponent* OverShoulderCameraBoom;
+
+    void ApplyDamage(AActor* DamageCauser);
 
 public:
     ACaptureTheFlagCharacter();
@@ -47,6 +49,11 @@ protected:
 
     UFUNCTION(Server, Reliable, WithValidation)
         void Server_Fire();
+
+    UFUNCTION()
+        virtual void OnDeath(AActor* KilledBy);
+    UFUNCTION(NetMulticast, Reliable)
+        void NMC_OnClientDeath();
 
 public:
     /** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
@@ -73,12 +80,11 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
         class UAnimMontage* FireAnimation;
 
-    /** AnimMontage to play each time we fire */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
-        class UAnimMontage* FireAnimationTP;
-
     UPROPERTY(Replicated, EditDefaultsOnly)
         float FireRate;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+        class UHealthComponent* Health;
 
 public:
     /** Fires a projectile. */
@@ -104,6 +110,8 @@ public:
      */
     void LookUpAtRate(float Rate);
 
+    //class UHealthComponent* GetHealth();
+
 protected:
     // APawn interface
     virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
@@ -111,19 +119,22 @@ protected:
 
 public:
     /** Returns Mesh1P subobject **/
-    FORCEINLINE class USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
-    /** Returns FirstPersonCameraComponent subobject **/
-    FORCEINLINE class UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
-
-    UPROPERTY(EditAnywhere, Category = "Health")
-        int Health = 5;
-
+    //FORCEINLINE class USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
+    /** Returns CameraBoom subobject **/
+    FORCEINLINE class USpringArmComponent* GetOverShoulderCameraBoom() const { return OverShoulderCameraBoom; }
+    /** Returns FollowCamera subobject **/
+    FORCEINLINE class UCameraComponent* GetOverShoulderCamera() const { return OverShoulderCamera; }
+    /** Returns HealthComponent subobject **/
+    FORCEINLINE class UHealthComponent* GetHealth() { return Health; }
 
 private:
     void ClearFireTimer();
 
     FTimerHandle FireTimer;
+
     class UCharacterBaseAnimation* AnimationInstance;
     class USkeletalMeshComponent* SkeletalMesh;
+
+
 };
 

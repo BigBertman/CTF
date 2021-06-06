@@ -14,6 +14,13 @@ class CAPTURETHEFLAG_API ACTFPlayerController : public APlayerController
 {
     GENERATED_BODY()
 
+public:
+    UPROPERTY()
+        class UPlayerWidget* GameInfoWidget;
+
+    UPROPERTY(EditDefaultsOnly)
+        TSubclassOf<UPlayerWidget> GameInfoBP;
+
 protected:
     virtual void SetupInputComponent() override;
 
@@ -25,6 +32,7 @@ protected:
 
     virtual void BeginPlay() override;
 
+    virtual void Tick(float DeltaTime) override;
 protected:
     class ACaptureTheFlagCharacter* Character;
 };

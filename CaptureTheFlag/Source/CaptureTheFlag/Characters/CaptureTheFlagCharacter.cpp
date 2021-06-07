@@ -31,7 +31,7 @@ ACaptureTheFlagCharacter::ACaptureTheFlagCharacter() :
     // Set size for collision capsule
     GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
 
-    GetCharacterMovement()->MaxWalkSpeed = 280.0f;
+    GetCharacterMovement()->MaxWalkSpeed = 500.0f;
     GetCharacterMovement()->bOrientRotationToMovement = false;
     GetCharacterMovement()->GravityScale = 1.5f;
     GetCharacterMovement()->JumpZVelocity = 620;
@@ -39,7 +39,6 @@ ACaptureTheFlagCharacter::ACaptureTheFlagCharacter() :
     GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
     GetCharacterMovement()->AirControl = 0.2f;
 
-    GetMesh()->SetOwnerNoSee(false);
     GetMesh()->SetIsReplicated(true);
 
     // set our turn rates for input
@@ -56,15 +55,6 @@ ACaptureTheFlagCharacter::ACaptureTheFlagCharacter() :
     OverShoulderCamera->SetupAttachment(OverShoulderCameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
     OverShoulderCamera->bUsePawnControlRotation = false;
 
-    // Create a mesh component that will be used when being viewed from a '1st person' view (when controlling this pawn)
-    //Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh1P"));
-    //Mesh1P->SetOnlyOwnerSee(true);
-    //Mesh1P->SetupAttachment(OverShoulderCamera);
-    //Mesh1P->bCastDynamicShadow = false;
-    //Mesh1P->CastShadow = false;
-    //Mesh1P->SetRelativeRotation(FRotator(1.9f, -19.19f, 5.2f));
-    //Mesh1P->SetRelativeLocation(FVector(-0.5f, -4.4f, -155.7f));
-
     FP_MuzzleLocation = CreateDefaultSubobject<USceneComponent>(TEXT("MuzzleLocation"));
     FP_MuzzleLocation->SetupAttachment(TP_Gun);
     FP_MuzzleLocation->SetRelativeLocation(FVector(0.2f, 48.4f, -10.6f));
@@ -74,7 +64,6 @@ ACaptureTheFlagCharacter::ACaptureTheFlagCharacter() :
 
     // Create a gun mesh component
     TP_Gun = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("TP_Gun"));
-    //TP_Gun->SetOnlyOwnerSee(true);			// only the owning player will see this mesh
     TP_Gun->SetOwnerNoSee(false);
     TP_Gun->bCastDynamicShadow = false;
     TP_Gun->CastShadow = false;
@@ -93,7 +82,6 @@ ACaptureTheFlagCharacter::ACaptureTheFlagCharacter() :
     SetReplicates(true);
     SetReplicateMovement(true);
     GetCharacterMovement()->SetIsReplicated(true);
-    GetCharacterMovement()->SetNetAddressable();
 }
 
 void ACaptureTheFlagCharacter::PostInitializeComponents()
@@ -168,6 +156,14 @@ void ACaptureTheFlagCharacter::SetupPlayerInputComponent(class UInputComponent* 
     PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ACaptureTheFlagCharacter::OnFire);
     PlayerInputComponent->BindAction("Fire", IE_Released, this, &ACaptureTheFlagCharacter::StopFire);
 
+    PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &ACaptureTheFlagCharacter::Crouch);
+    PlayerInputComponent->BindAction("Crouch", IE_Released, this, &ACaptureTheFlagCharacter::StopCrouch);
+
+    PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &ACaptureTheFlagCharacter::Aim);
+    PlayerInputComponent->BindAction("Aim", IE_Released, this, &ACaptureTheFlagCharacter::StopAim);
+
+    PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &ACaptureTheFlagCharacter::Run);
+    PlayerInputComponent->BindAction("Sprint", IE_Released, this, &ACaptureTheFlagCharacter::StopRun);
 }
 
 void ACaptureTheFlagCharacter::ApplyDamage(AActor* DamageCauser)
@@ -329,6 +325,100 @@ void ACaptureTheFlagCharacter::LookUpAtRate(float Rate)
     AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
 }
 
+void ACaptureTheFlagCharacter::Crouch()
+{
+    Server_Crouch();
+}
+
+void ACaptureTheFlagCharacter::StopCrouch()
+{
+    Server_StopCrouch();
+}
+
+bool ACaptureTheFlagCharacter::Server_Crouch_Validate()
+{
+    return true;
+}
+
+void ACaptureTheFlagCharacter::Server_Crouch_Implementation()
+{
+    if (GetLocalRole() == ROLE_Authority)
+    {
+        bIsCrouching = true;
+        AnimationInstance->bIsCrouched = bIsCrouching;
+    }
+}
+
+bool ACaptureTheFlagCharacter::Server_StopCrouch_Validate()
+{
+    return true;
+}
+
+void ACaptureTheFlagCharacter::Server_StopCrouch_Implementation()
+{
+    if (GetLocalRole() == ROLE_Authority)
+    {
+        bIsCrouching = false;
+        AnimationInstance->bIsCrouched = bIsCrouching;
+    }
+}
+
+void ACaptureTheFlagCharacter::Aim()
+{
+    bIsAiming = true;
+    AnimationInstance->bIsAiming = bIsAiming;
+    OverShoulderCamera->SetFieldOfView(60);
+}
+
+void ACaptureTheFlagCharacter::StopAim()
+{
+    bIsAiming = false;
+    AnimationInstance->bIsAiming = bIsAiming;
+    OverShoulderCamera->SetFieldOfView(90);
+}
+
+void ACaptureTheFlagCharacter::Run()
+{
+    Server_Run();
+}
+
+void ACaptureTheFlagCharacter::StopRun()
+{
+    Server_StopRun();
+}
+
+bool ACaptureTheFlagCharacter::Server_Run_Validate()
+{
+    return true;
+}
+
+void ACaptureTheFlagCharacter::Server_Run_Implementation()
+{
+    if (GetLocalRole() == ROLE_Authority)
+    {
+        bIsRunning = true;
+        bIsCrouching = false;
+        AnimationInstance->bIsRunning = bIsRunning;
+        AnimationInstance->bIsCrouched = bIsCrouching;
+        GetCharacterMovement()->MaxWalkSpeed = 750.0f;
+    }
+}
+
+bool ACaptureTheFlagCharacter::Server_StopRun_Validate()
+{
+    return true;
+}
+
+void ACaptureTheFlagCharacter::Server_StopRun_Implementation()
+{
+    if (GetLocalRole() == ROLE_Authority)
+    {
+        bIsRunning = false;
+        AnimationInstance->bIsRunning = bIsRunning;
+        GetCharacterMovement()->MaxWalkSpeed = 500.0f;
+    }
+}
+
 //UHealthComponent* ACaptureTheFlagCharacter::GetHealth()
 //{
 //    return Health;
@@ -338,4 +428,7 @@ void ACaptureTheFlagCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProper
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(ACaptureTheFlagCharacter, FireRate);
+    DOREPLIFETIME(ACaptureTheFlagCharacter, bIsAiming);
+    DOREPLIFETIME(ACaptureTheFlagCharacter, bIsRunning);
+    DOREPLIFETIME(ACaptureTheFlagCharacter, bIsCrouching);
 }

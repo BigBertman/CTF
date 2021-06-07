@@ -18,14 +18,23 @@ public:
     //UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated)
     //    bool bIsAiming;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated)
         bool bIsMoving;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated)
         float MovementSpeed;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated)
         float StrafingRotation;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated)
+        bool bIsAiming;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated)
+        bool bIsRunning;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated)
+        bool bIsCrouched;
 
 protected:
     UCharacterBaseAnimation();

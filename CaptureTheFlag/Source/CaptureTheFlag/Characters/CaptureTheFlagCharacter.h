@@ -112,6 +112,38 @@ public:
 
     //class UHealthComponent* GetHealth();
 
+    void Crouch();
+    void StopCrouch();
+
+    UFUNCTION(Server, Reliable, WithValidation)
+        void Server_Crouch();
+
+    UFUNCTION(Server, Reliable, WithValidation)
+        void Server_StopCrouch();
+
+    void Aim();
+
+    void StopAim();
+
+    void Run();
+    void StopRun();
+
+    UFUNCTION(Server, Reliable, WithValidation)
+        void Server_Run();
+
+    UFUNCTION(Server, Reliable, WithValidation)
+        void Server_StopRun();
+
+    UPROPERTY(Replicated)
+        bool bIsAiming = false;
+
+    UPROPERTY(Replicated)
+        bool bIsRunning = false;
+
+    UPROPERTY(Replicated)
+        bool bIsCrouching = false;
+
+
 protected:
     // APawn interface
     virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;

@@ -13,7 +13,7 @@ void ACTFPlayerController::BeginPlay()
     {
         GameInfoWidget = CreateWidget<UPlayerWidget>(this, GameInfoBP);
         GameInfoWidget->AddToViewport();
-         GameInfoWidget->UpdateHealthBar();
+        GameInfoWidget->UpdateHealthBar();
     }
 }
 

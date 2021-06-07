@@ -14,10 +14,6 @@ class ACaptureTheFlagCharacter : public ACharacter
     GENERATED_BODY()
 
 public:
-    /** Pawn mesh: 1st person view (arms; seen only by self) */
-    //UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
-    //    class USkeletalMeshComponent* Mesh1P;
-
     /** Gun mesh: 3st person view (seen only by self) */
     UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
         class USkeletalMeshComponent* TP_Gun;
@@ -110,8 +106,6 @@ public:
      */
     void LookUpAtRate(float Rate);
 
-    //class UHealthComponent* GetHealth();
-
     void Crouch();
     void StopCrouch();
 
@@ -122,7 +116,6 @@ public:
         void Server_StopCrouch();
 
     void Aim();
-
     void StopAim();
 
     void Run();
@@ -166,7 +159,5 @@ private:
 
     class UCharacterBaseAnimation* AnimationInstance;
     class USkeletalMeshComponent* SkeletalMesh;
-
-
 };
 

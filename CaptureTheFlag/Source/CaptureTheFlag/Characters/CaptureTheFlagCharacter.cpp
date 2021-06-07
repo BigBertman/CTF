@@ -41,7 +41,7 @@ ACaptureTheFlagCharacter::ACaptureTheFlagCharacter() :
 
     GetMesh()->SetIsReplicated(true);
 
-    // set our turn rates for input
+    // Set our turn rates for input
     BaseTurnRate = 45.f;
     BaseLookUpRate = 45.f;
 
@@ -87,8 +87,6 @@ ACaptureTheFlagCharacter::ACaptureTheFlagCharacter() :
 void ACaptureTheFlagCharacter::PostInitializeComponents()
 {
     Super::PostInitializeComponents();
-
-    // Retrive the health component.
 
     // Subscribe to health component's events.
     if (Health != nullptr)
@@ -209,28 +207,6 @@ void ACaptureTheFlagCharacter::NMC_PlayWeaponFiringAnimation_Implementation()
     {
         UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
     }
-
-    // try and play a firing animation if specified
-    //if (FireAnimation != NULL)
-    //{
-    //    // Get the animation object for the arms mesh
-    //    UAnimInstance* AnimInstance = Mesh1P->GetAnimInstance();
-    //    if (AnimInstance != NULL)
-    //    {
-    //        AnimInstance->Montage_Play(FireAnimation, 1.f);
-    //    }
-    //}
-
-    // try and play a firing animation if specified
-    //if (FireAnimationTP != NULL)
-    //{
-    //    // Get the animation object for the arms mesh
-    //    UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-    //    if (AnimInstance != NULL)
-    //    {
-    //        AnimInstance->Montage_Play(FireAnimationTP, 1.f);
-    //    }
-    //}
 }
 
 bool ACaptureTheFlagCharacter::Server_Fire_Validate()
@@ -251,13 +227,11 @@ void ACaptureTheFlagCharacter::Server_Fire_Implementation()
             // MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
             const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : GetActorLocation()) + SpawnRotation.RotateVector(GunOffset);
 
-            //Set Spawn Collision Handling Override
+            // Set Spawn Collision Handling Override
             FActorSpawnParameters ActorSpawnParams;
             ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
 
-            // spawn the projectile at the muzzle
-            //World->SpawnActor<ACaptureTheFlagProjectile>(ProjectileClass, SpawnLocation, SpawnRotation, ActorSpawnParams);
-
+            // Spawn the projectile at the muzzle
             FVector MuzzleLocation = TP_Gun->GetSocketLocation("Muzzle");
 
             World->SpawnActor<ACaptureTheFlagProjectile>(ProjectileClass, MuzzleLocation, SpawnRotation, ActorSpawnParams);
@@ -269,7 +243,6 @@ void ACaptureTheFlagCharacter::Server_Fire_Implementation()
 
 void ACaptureTheFlagCharacter::OnFire()
 {
-
     auto& TimerManager = GetWorld()->GetTimerManager();
 
     // Start the firing timer and use the remaining time of the previous timer.
@@ -418,11 +391,6 @@ void ACaptureTheFlagCharacter::Server_StopRun_Implementation()
         GetCharacterMovement()->MaxWalkSpeed = 500.0f;
     }
 }
-
-//UHealthComponent* ACaptureTheFlagCharacter::GetHealth()
-//{
-//    return Health;
-//}
 
 void ACaptureTheFlagCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {

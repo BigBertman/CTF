@@ -157,6 +157,7 @@ public:
     UPROPERTY(Replicated)
         bool bIsCrouching = false;
 
+    void Respawn();
 
 protected:
     // APawn interface

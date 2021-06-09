@@ -9,10 +9,12 @@
 UCLASS(minimalapi)
 class ACaptureTheFlagGameMode : public AGameModeBase
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	ACaptureTheFlagGameMode();
+    ACaptureTheFlagGameMode();
+
+    void RespawnPlayer(APlayerController* NewPlayer);
 };
 
 

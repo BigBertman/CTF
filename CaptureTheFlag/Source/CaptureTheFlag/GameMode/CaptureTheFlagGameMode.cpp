@@ -3,6 +3,9 @@
 #include "CaptureTheFlagGameMode.h"
 #include "../CaptureTheFlagHUD.h"
 #include "UObject/ConstructorHelpers.h"
+#include "../Characters/CaptureTheFlagCharacter.h"
+#include <Runtime/Engine/Classes/Kismet/GameplayStatics.h>
+#include "GameFramework/PlayerStart.h"
 
 ACaptureTheFlagGameMode::ACaptureTheFlagGameMode()
 {
@@ -21,4 +24,19 @@ ACaptureTheFlagGameMode::ACaptureTheFlagGameMode()
 
     // use our custom HUD class
     HUDClass = ACaptureTheFlagHUD::StaticClass();
+}
+
+void ACaptureTheFlagGameMode::RespawnPlayer(APlayerController* NewPlayer)
+{
+    TArray<AActor*> PlayerStarts;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), PlayerStarts);
+    APawn* pawn = SpawnDefaultPawnFor(NewPlayer, PlayerStarts[0]);
+    if (pawn != nullptr)
+    {
+        if (Cast<ACaptureTheFlagCharacter>(pawn))
+        {
+            NewPlayer->SetPawn(pawn);
+            RestartPlayer(NewPlayer);
+        }
+    }
 }

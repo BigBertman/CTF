@@ -15,7 +15,7 @@
 #include "../Health/HealthComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/SpringArmComponent.h"
-
+#include "../GameMode/CaptureTheFlagGameMode.h"
 DEFINE_LOG_CATEGORY_STATIC(LogFPChar, Warning, All);
 
 //////////////////////////////////////////////////////////////////////////
@@ -182,10 +182,11 @@ void ACaptureTheFlagCharacter::OnDeath(AActor* KilledBy)
 
     NMC_OnClientDeath();
 
-    if (IsPlayerControlled())
-    {
-        DetachFromControllerPendingDestroy();
-    }
+    //if (IsPlayerControlled())
+    //{
+    //    DetachFromControllerPendingDestroy();
+    //}
+
 }
 
 void ACaptureTheFlagCharacter::NMC_OnClientDeath_Implementation()
@@ -197,6 +198,23 @@ void ACaptureTheFlagCharacter::NMC_OnClientDeath_Implementation()
     // Simulate character's ragdoll.
     SkeletalMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
     SkeletalMesh->SetSimulatePhysics(true);
+
+    // Start a respawn handler to CALL Respawn() after 5 seconds(Non Looping)
+    FTimerHandle respawn;
+    GetWorldTimerManager().SetTimer(respawn, this, &ACaptureTheFlagCharacter::Respawn, 5.0f, false);
+}
+
+void ACaptureTheFlagCharacter::Respawn()
+{
+    //if (GetLocalRole() == ROLE_Authority)
+    {
+        ACaptureTheFlagGameMode* GM = Cast<ACaptureTheFlagGameMode>(GetWorld()->GetAuthGameMode());
+        if (GM != nullptr)
+        {
+            GM->RespawnPlayer(Cast<APlayerController>(GetController()));
+            Destroy();
+        }
+    }
 }
 
 void ACaptureTheFlagCharacter::NMC_PlayWeaponFiringAnimation_Implementation()

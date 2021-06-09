@@ -91,8 +91,20 @@ public:
     /** Handles moving forward/backward */
     void MoveForward(float Val);
 
+    UFUNCTION(NetMulticast, Reliable)
+        void NMC_MoveForward(float Val);
+
+    UFUNCTION(Server, Reliable, WithValidation)
+        void Server_MoveForward(float Val);
+
     /** Handles stafing movement, left and right */
     void MoveRight(float Val);
+
+    UFUNCTION(NetMulticast, Reliable)
+        void NMC_MoveRight(float Val);
+
+    UFUNCTION(Server, Reliable, WithValidation)
+        void Server_MoveRight(float Val);
 
     /**
      * Called via input to turn at a given rate.
@@ -106,14 +118,19 @@ public:
      */
     void LookUpAtRate(float Rate);
 
-    void Crouch();
+    void Crouching();
     void StopCrouch();
 
     UFUNCTION(Server, Reliable, WithValidation)
         void Server_Crouch();
-
     UFUNCTION(Server, Reliable, WithValidation)
         void Server_StopCrouch();
+
+    UFUNCTION(NetMulticast, Reliable)
+        void NMC_Crouch();
+    UFUNCTION(NetMulticast, Reliable)
+        void NMC_StopCrouch();
+
 
     void Aim();
     void StopAim();
@@ -123,9 +140,13 @@ public:
 
     UFUNCTION(Server, Reliable, WithValidation)
         void Server_Run();
-
     UFUNCTION(Server, Reliable, WithValidation)
         void Server_StopRun();
+
+    UFUNCTION(NetMulticast, Reliable)
+        void NMC_Run();
+    UFUNCTION(NetMulticast, Reliable)
+        void NMC_StopRun();
 
     UPROPERTY(Replicated)
         bool bIsAiming = false;

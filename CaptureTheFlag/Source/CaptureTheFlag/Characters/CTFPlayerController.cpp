@@ -56,8 +56,8 @@ void ACTFPlayerController::AcknowledgePossession(APawn* PossessedPawn)
         InputComponent->BindAction("Jump", IE_Released, Character, &ACharacter::StopJumping);
 
         // Bind movement events
-        InputComponent->BindAxis("MoveForward", Character, &ACaptureTheFlagCharacter::MoveForward);
-        InputComponent->BindAxis("MoveRight", Character, &ACaptureTheFlagCharacter::MoveRight);
+        InputComponent->BindAxis("MoveForward", Character, &ACaptureTheFlagCharacter::Server_MoveForward);
+        InputComponent->BindAxis("MoveRight", Character, &ACaptureTheFlagCharacter::Server_MoveRight);
 
         // We have 2 versions of the rotation bindings to handle different kinds of devices differently
         // "turn" handles devices that provide an absolute delta, such as a mouse.

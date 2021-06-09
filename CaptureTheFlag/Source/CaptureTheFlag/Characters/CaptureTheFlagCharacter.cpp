@@ -38,8 +38,10 @@ ACaptureTheFlagCharacter::ACaptureTheFlagCharacter() :
     GetCharacterMovement()->MaxWalkSpeedCrouched = 200;
     GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
     GetCharacterMovement()->AirControl = 0.2f;
+    GetCharacterMovement()->SetIsReplicated(true);
+    GetCharacterMovement()->SetNetAddressable();
 
-    GetMesh()->SetIsReplicated(true);
+    //GetMesh()->SetIsReplicated(true);
 
     // Set our turn rates for input
     BaseTurnRate = 45.f;
@@ -81,7 +83,6 @@ ACaptureTheFlagCharacter::ACaptureTheFlagCharacter() :
     bReplicates = true;
     SetReplicates(true);
     SetReplicateMovement(true);
-    GetCharacterMovement()->SetIsReplicated(true);
 }
 
 void ACaptureTheFlagCharacter::PostInitializeComponents()
@@ -154,14 +155,14 @@ void ACaptureTheFlagCharacter::SetupPlayerInputComponent(class UInputComponent* 
     PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ACaptureTheFlagCharacter::OnFire);
     PlayerInputComponent->BindAction("Fire", IE_Released, this, &ACaptureTheFlagCharacter::StopFire);
 
-    PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &ACaptureTheFlagCharacter::Crouch);
-    PlayerInputComponent->BindAction("Crouch", IE_Released, this, &ACaptureTheFlagCharacter::StopCrouch);
+    PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &ACaptureTheFlagCharacter::Server_Crouch);
+    PlayerInputComponent->BindAction("Crouch", IE_Released, this, &ACaptureTheFlagCharacter::Server_StopCrouch);
 
     PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &ACaptureTheFlagCharacter::Aim);
     PlayerInputComponent->BindAction("Aim", IE_Released, this, &ACaptureTheFlagCharacter::StopAim);
 
-    PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &ACaptureTheFlagCharacter::Run);
-    PlayerInputComponent->BindAction("Sprint", IE_Released, this, &ACaptureTheFlagCharacter::StopRun);
+    PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &ACaptureTheFlagCharacter::Server_Run);
+    PlayerInputComponent->BindAction("Sprint", IE_Released, this, &ACaptureTheFlagCharacter::Server_StopRun);
 }
 
 void ACaptureTheFlagCharacter::ApplyDamage(AActor* DamageCauser)
@@ -277,6 +278,21 @@ void ACaptureTheFlagCharacter::MoveForward(float Value)
     }
 }
 
+void ACaptureTheFlagCharacter::Server_MoveForward_Implementation(float Value)
+{
+    NMC_MoveForward(Value);
+}
+
+bool ACaptureTheFlagCharacter::Server_MoveForward_Validate(float Value)
+{
+    return true;
+}
+
+void ACaptureTheFlagCharacter::NMC_MoveForward_Implementation(float Value)
+{
+    MoveForward(Value);
+}
+
 void ACaptureTheFlagCharacter::MoveRight(float Value)
 {
     if (Value != 0.0f)
@@ -284,6 +300,21 @@ void ACaptureTheFlagCharacter::MoveRight(float Value)
         // add movement in that direction
         AddMovementInput(GetActorRightVector(), Value);
     }
+}
+
+void ACaptureTheFlagCharacter::Server_MoveRight_Implementation(float Value)
+{
+    NMC_MoveRight(Value);
+}
+
+bool ACaptureTheFlagCharacter::Server_MoveRight_Validate(float Value)
+{
+    return true;
+}
+
+void ACaptureTheFlagCharacter::NMC_MoveRight_Implementation(float Value)
+{
+    MoveRight(Value);
 }
 
 void ACaptureTheFlagCharacter::TurnAtRate(float Rate)
@@ -298,14 +329,21 @@ void ACaptureTheFlagCharacter::LookUpAtRate(float Rate)
     AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
 }
 
-void ACaptureTheFlagCharacter::Crouch()
+void ACaptureTheFlagCharacter::Crouching()
 {
-    Server_Crouch();
+    bIsCrouching = true;
+    AnimationInstance->bIsCrouched = bIsCrouching;
 }
 
 void ACaptureTheFlagCharacter::StopCrouch()
 {
-    Server_StopCrouch();
+    bIsCrouching = false;
+    AnimationInstance->bIsCrouched = bIsCrouching;
+}
+
+void ACaptureTheFlagCharacter::NMC_Crouch_Implementation()
+{
+    Crouching();
 }
 
 bool ACaptureTheFlagCharacter::Server_Crouch_Validate()
@@ -315,11 +353,15 @@ bool ACaptureTheFlagCharacter::Server_Crouch_Validate()
 
 void ACaptureTheFlagCharacter::Server_Crouch_Implementation()
 {
-    if (GetLocalRole() == ROLE_Authority)
+    // if (GetLocalRole() == ROLE_Authority)
     {
-        bIsCrouching = true;
-        AnimationInstance->bIsCrouched = bIsCrouching;
+        NMC_Crouch();
     }
+}
+
+void ACaptureTheFlagCharacter::NMC_StopCrouch_Implementation()
+{
+    StopCrouch();
 }
 
 bool ACaptureTheFlagCharacter::Server_StopCrouch_Validate()
@@ -329,10 +371,9 @@ bool ACaptureTheFlagCharacter::Server_StopCrouch_Validate()
 
 void ACaptureTheFlagCharacter::Server_StopCrouch_Implementation()
 {
-    if (GetLocalRole() == ROLE_Authority)
+    //if (GetLocalRole() == ROLE_Authority)
     {
-        bIsCrouching = false;
-        AnimationInstance->bIsCrouched = bIsCrouching;
+        NMC_StopCrouch();
     }
 }
 
@@ -352,12 +393,23 @@ void ACaptureTheFlagCharacter::StopAim()
 
 void ACaptureTheFlagCharacter::Run()
 {
-    Server_Run();
+    bIsRunning = true;
+    bIsCrouching = false;
+    AnimationInstance->bIsRunning = bIsRunning;
+    AnimationInstance->bIsCrouched = bIsCrouching;
+    GetCharacterMovement()->MaxWalkSpeed = 750.0f;
 }
 
 void ACaptureTheFlagCharacter::StopRun()
 {
-    Server_StopRun();
+    bIsRunning = false;
+    AnimationInstance->bIsRunning = bIsRunning;
+    GetCharacterMovement()->MaxWalkSpeed = 500.0f;
+}
+
+void ACaptureTheFlagCharacter::NMC_Run_Implementation()
+{
+    Run();
 }
 
 bool ACaptureTheFlagCharacter::Server_Run_Validate()
@@ -367,14 +419,15 @@ bool ACaptureTheFlagCharacter::Server_Run_Validate()
 
 void ACaptureTheFlagCharacter::Server_Run_Implementation()
 {
-    if (GetLocalRole() == ROLE_Authority)
+    //if (GetLocalRole() == ROLE_Authority)
     {
-        bIsRunning = true;
-        bIsCrouching = false;
-        AnimationInstance->bIsRunning = bIsRunning;
-        AnimationInstance->bIsCrouched = bIsCrouching;
-        GetCharacterMovement()->MaxWalkSpeed = 750.0f;
+        NMC_Run();
     }
+}
+
+void ACaptureTheFlagCharacter::NMC_StopRun_Implementation()
+{
+    StopRun();
 }
 
 bool ACaptureTheFlagCharacter::Server_StopRun_Validate()
@@ -384,11 +437,9 @@ bool ACaptureTheFlagCharacter::Server_StopRun_Validate()
 
 void ACaptureTheFlagCharacter::Server_StopRun_Implementation()
 {
-    if (GetLocalRole() == ROLE_Authority)
+    //if (GetLocalRole() == ROLE_Authority)
     {
-        bIsRunning = false;
-        AnimationInstance->bIsRunning = bIsRunning;
-        GetCharacterMovement()->MaxWalkSpeed = 500.0f;
+        NMC_StopRun();
     }
 }
 

@@ -16,6 +16,8 @@
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "../GameMode/CaptureTheFlagGameMode.h"
+#include "../GameState/CaptureTheFlagGameState.h"
+
 DEFINE_LOG_CATEGORY_STATIC(LogFPChar, Warning, All);
 
 //////////////////////////////////////////////////////////////////////////
@@ -111,6 +113,22 @@ void ACaptureTheFlagCharacter::BeginPlay()
 
     //Attach gun mesh component to Skeleton, doing it here because the skeleton is not yet created in the constructor
     TP_Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("WeaponSocket"));
+
+    if (GetLocalRole() == ROLE_Authority)
+    {
+        UWorld* World = GetWorld();
+
+        if (World != nullptr)
+        {
+            ACaptureTheFlagGameState* GS = World->GetGameState<ACaptureTheFlagGameState>();
+
+            if (GS != nullptr)
+            {
+                //GS->AddToTeam(this);
+            }
+        }
+    }
+
 }
 
 void ACaptureTheFlagCharacter::Tick(float DeltaTime)

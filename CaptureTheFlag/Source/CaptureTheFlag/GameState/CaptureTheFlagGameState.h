@@ -6,16 +6,6 @@
 #include "GameFramework/GameStateBase.h"
 #include "CaptureTheFlagGameState.generated.h"
 
-
-
-USTRUCT()
-struct FCaptureTeam
-{
-    GENERATED_BODY()
-
-        //TArray<class ACaptureTheFlagCharacter*> mPlayers;
-};
-
 /**
  *
  */
@@ -25,20 +15,33 @@ class CAPTURETHEFLAG_API ACaptureTheFlagGameState : public AGameStateBase
     GENERATED_BODY()
 
 public:
-    //ACaptureTheFlagGameState(const FObjectInitializer& ObjectInitializer);
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Materials, Replicated)
+        TArray<class UMaterialInterface*> TeamOnePMaterials;
 
-    //void AddToTeam(class ACaptureTheFlagCharacter* Character);
-    //void RemoveFromTeam(class ACaptureTheFlagCharacter* Character);
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Materials, Replicated)
+        TArray<class UMaterialInterface*> TeamTwoPMaterials;
 
-    //int32 GetNextTeamIndex() const;
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Gameplay, Replicated)
+        bool TeamsEnabled;
 
-    //UPROPERTY(Transient, Replicated)
-    //    TArray<FCaptureTeam> mTeams;
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Gameplay, meta = (ClampMin = 0), Replicated)
+        int TeamOneScore;
 
-    //UPROPERTY(Replicated)
-    //    int BlueScore;
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Gameplay, meta = (ClampMin = 0), Replicated)
+        int TeamTwoScore;
 
-    //UPROPERTY(Replicated)
-    //    int RedScore;
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Gameplay, meta = (ClampMin = 0), Replicated)
+        int TeamOneMatchScore;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Gameplay, meta = (ClampMin = 0), Replicated)
+        int TeamTwoMatchScore;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Gameplay, meta = (ClampMin = 0), Replicated)
+        int TeamOneSize = 0;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Gameplay, meta = (ClampMin = 0), Replicated)
+        int TeamTwoSize = 0;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Gameplay, meta = (ClampMin = 0), Replicated)
+        float GameTime;
 };

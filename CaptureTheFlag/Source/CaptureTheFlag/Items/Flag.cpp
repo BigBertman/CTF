@@ -98,7 +98,7 @@ void AFlag::SetState(ECaptureFlagState NewState, AActor* Pawn)
         ACaptureTheFlagCharacter* Player = Cast<ACaptureTheFlagCharacter>(Pawn);
         CollisionComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
         CollisionComponent->AttachToComponent(Player->GetMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), FName(TEXT("Flag")));
-        // Player->SetCarriedFlag(this);
+        Player->SetCarriedFlag(this);
         break;
     }
 

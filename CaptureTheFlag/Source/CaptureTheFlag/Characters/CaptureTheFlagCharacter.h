@@ -82,7 +82,13 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
         class UHealthComponent* Health;
 
-public:
+    UPROPERTY(Replicated)
+        class AFlag* Flag;
+    
+    
+public:    
+    void SetCarriedFlag(AActor* flag);
+
     /** Fires a projectile. */
     void OnFire();
 
@@ -159,10 +165,67 @@ public:
 
     void Respawn();
 
+    // The player's name (usually loaded from a save file or database)
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Character|Name", Replicated)
+        FString PlayerName;
+
+    // The player's current team.
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Character|Gameplay", Replicated)
+        int PlayerTeam;
+
+    // Size of team one (grabbed from game state)
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Character|Debug", Replicated)
+        int TeamOneCount;
+
+    // Size of team two (grabbed from game state)
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Character|Debug", Replicated)
+        int TeamTwoCount;
+
+    // Team one's score (grabbed from game state)   
+    UPROPERTY(BlueprintReadWrite, Category = "Character|Debug", Replicated)
+        int TeamOneScore;
+
+    // Team two's score (grabbed from game state) 
+    UPROPERTY(BlueprintReadWrite, Category = "Character|Debug", Replicated)
+        int TeamTwoScore;
+
+    // Used to reference the player's current netID 
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Character|Debug", Replicated)
+        int NetIndex;
+
+    // Players Material Color
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character|Mesh", Replicated)
+        TArray<class UMaterialInterface*> DefaultTPMaterials;
+
+    // Getters for PlayerState and GameState
+    class ACaptureTheFlagPlayerState* GetCharacterPlayerState();
+    class ACaptureTheFlagGameState* GetGameState();
+
+    // Assigns a team to the player that logs in
+    void AssignTeams();
+    // Assigns a Network Index to the player that logs in
+
+    void AssignNetIndex();
+
+    // Multicasts to all clients to assign the team color to Simulated_Proxy's and Autonomous_Proxy's when player logs in(CALLED FROM SERVER)
+    UFUNCTION(NetMulticast, Reliable)
+        void Multicast_AssignTeamsColor(int team, int index);
+
+    // Sets the material to the mesh
+    void SetMaterialToMesh(USkeletalMeshComponent* InMeshComp, const TArray<UMaterialInterface*>& InMaterials);
+
+    UFUNCTION(Server, Reliable, WithValidation)
+        void Server_PostBeginPlay();
+
+    UFUNCTION(BlueprintCallable, Category = Game)
+        virtual void UpdateAndCheckPlayer();
+
 protected:
     // APawn interface
     virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
     // End of APawn interface
+
+    class USkeletalMeshComponent* GetSkeletalMesh() { return SkeletalMesh; }
 
 public:
     /** Returns Mesh1P subobject **/
@@ -181,5 +244,10 @@ private:
 
     class UCharacterBaseAnimation* AnimationInstance;
     class USkeletalMeshComponent* SkeletalMesh;
+
+    FTimerHandle UpdateHandle;
+
+    UPROPERTY(Replicated)
+        FTimerHandle PostBeginPlayDelay;
 };
 

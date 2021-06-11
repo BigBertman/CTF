@@ -14,7 +14,19 @@ class ACaptureTheFlagGameMode : public AGameModeBase
 public:
     ACaptureTheFlagGameMode();
 
-    void RespawnPlayer(APlayerController* NewPlayer);
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Gameplay)
+        int TeamOneScore = 0;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Gameplay)
+        int TeamTwoScore = 0;
+
+    virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
+
+    void RespawnPlayer(APlayerController* NewPlayer, int playerTeam, int NetIndex);
+
+private:
+    void HandleNewPlayer(APlayerController* NewPlayer);
+
 };
 
 

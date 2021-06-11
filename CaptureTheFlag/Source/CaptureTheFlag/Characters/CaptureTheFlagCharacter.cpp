@@ -17,6 +17,10 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "../GameMode/CaptureTheFlagGameMode.h"
 #include "../GameState/CaptureTheFlagGameState.h"
+#include <Runtime/Engine/Classes/GameFramework/PlayerStart.h>
+#include "GameFramework/PlayerState.h"
+#include "../PlayerState/CaptureTheFlagPlayerState.h"
+#include "../Items/Flag.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogFPChar, Warning, All);
 
@@ -85,6 +89,9 @@ ACaptureTheFlagCharacter::ACaptureTheFlagCharacter() :
     bReplicates = true;
     SetReplicates(true);
     SetReplicateMovement(true);
+
+    Flag = nullptr;
+
 }
 
 void ACaptureTheFlagCharacter::PostInitializeComponents()
@@ -114,21 +121,143 @@ void ACaptureTheFlagCharacter::BeginPlay()
     //Attach gun mesh component to Skeleton, doing it here because the skeleton is not yet created in the constructor
     TP_Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("WeaponSocket"));
 
+    PlayerName = GetFName().ToString(); // TEMP
+
+    if (GetLocalRole() > ROLE_AutonomousProxy)
+    {
+        NetIndex = GetWorld()->GetGameState()->AuthorityGameMode->GetNumPlayers() - 1;
+    }
+
+    GetWorldTimerManager().SetTimer(UpdateHandle, this, &ACaptureTheFlagCharacter::UpdateAndCheckPlayer, 0.03333f, true, 0.0f);
+    GetWorldTimerManager().SetTimer(PostBeginPlayDelay, this, &ACaptureTheFlagCharacter::Server_PostBeginPlay, 5.0f, false);
+}
+
+bool ACaptureTheFlagCharacter::Server_PostBeginPlay_Validate()
+{
+    return true;
+}
+void ACaptureTheFlagCharacter::Server_PostBeginPlay_Implementation()
+{
     if (GetLocalRole() == ROLE_Authority)
     {
-        UWorld* World = GetWorld();
-
-        if (World != nullptr)
+        if (GetCharacterPlayerState())
         {
-            ACaptureTheFlagGameState* GS = World->GetGameState<ACaptureTheFlagGameState>();
+            Multicast_AssignTeamsColor(GetCharacterPlayerState()->PlayerTeam, NetIndex);
+        }
+    }
+}
 
-            if (GS != nullptr)
-            {
-                //GS->AddToTeam(this);
-            }
+void ACaptureTheFlagCharacter::UpdateAndCheckPlayer()
+{
+    if (GetGameState())
+    {
+        TeamOneCount = GetGameState()->TeamOneSize;
+        TeamTwoCount = GetGameState()->TeamTwoSize;
+        TeamOneScore = GetGameState()->TeamOneScore;
+        TeamTwoScore = GetGameState()->TeamTwoScore;
+    }
+
+}
+
+void ACaptureTheFlagCharacter::AssignTeams()
+{
+    if (!GetGameState())
+        return;
+
+    TeamOneCount = GetGameState()->TeamOneSize;
+    TeamTwoCount = GetGameState()->TeamTwoSize;
+
+    if (TeamOneCount == TeamTwoCount)
+    {
+        //IF The Net Mode is Dedicated Server
+        if (GetNetMode() == ENetMode::NM_DedicatedServer)
+        {
+            GetGameState()->TeamOneSize++;
+            PlayerTeam = 0;
+        }
+        else
+        {
+            GetGameState()->TeamTwoSize++;
+            PlayerTeam = 1;
         }
     }
 
+    //If either of the teams is larger than the other, assign the player to the team with less to balance them
+    else
+    {
+        if (TeamOneCount > TeamTwoCount)
+        {
+            GetGameState()->TeamTwoSize++;
+            PlayerTeam = 1;
+        }
+        else if (TeamOneCount < TeamTwoCount)
+        {
+            GetGameState()->TeamOneSize++;
+            PlayerTeam = 0;
+        }
+    }
+
+    if (GetCharacterPlayerState() != nullptr)
+    {
+        GetCharacterPlayerState()->PlayerTeam = PlayerTeam;
+    }
+}
+
+void ACaptureTheFlagCharacter::AssignNetIndex()
+{
+    NetIndex = GetGameState()->AuthorityGameMode->GetNumPlayers() - 1;
+}
+
+void ACaptureTheFlagCharacter::Multicast_AssignTeamsColor_Implementation(int team, int index)
+{
+    if (GetGameState() != nullptr)
+    {
+        for (auto PS : GetGameState()->PlayerArray)
+        {
+            ACaptureTheFlagPlayerState* BPS = Cast<ACaptureTheFlagPlayerState>(PS);
+            if (BPS != nullptr)
+            {
+                ACaptureTheFlagCharacter* CB = Cast<ACaptureTheFlagCharacter>(BPS->GetPawn());
+                if (CB != nullptr)
+                {
+                    if (BPS->PlayerTeam == 0)
+                    {
+                        //If the first person material array for team one isn't null,
+                        //assign those materials to the first person mesh
+                        if (GetGameState()->TeamOnePMaterials.Num() > 0)
+                        {
+                            DefaultTPMaterials = GetGameState()->TeamOnePMaterials;
+                            CB->SetMaterialToMesh(CB->GetSkeletalMesh(), DefaultTPMaterials);
+                        }
+                    }
+                    else if (BPS->PlayerTeam == 1)
+                    {
+                        if (GetGameState()->TeamTwoPMaterials.Num() > 0)
+                        {
+                            DefaultTPMaterials = GetGameState()->TeamTwoPMaterials;
+                            CB->SetMaterialToMesh(CB->GetSkeletalMesh(), DefaultTPMaterials);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+void ACaptureTheFlagCharacter::SetMaterialToMesh(USkeletalMeshComponent* InMeshComp, const TArray<UMaterialInterface*>& InMaterials)
+{
+    if (InMeshComp != nullptr && InMaterials.Num() > 0)
+    {
+        for (int i = 0; i < InMaterials.Num(); i++)
+        {
+            UMaterialInterface* MaterialToAssign = InMaterials[i];
+
+            if (MaterialToAssign != nullptr)
+            {
+                InMeshComp->SetMaterial(i, MaterialToAssign);
+            }
+        }
+    }
 }
 
 void ACaptureTheFlagCharacter::Tick(float DeltaTime)
@@ -181,6 +310,9 @@ void ACaptureTheFlagCharacter::SetupPlayerInputComponent(class UInputComponent* 
 
     PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &ACaptureTheFlagCharacter::Server_Run);
     PlayerInputComponent->BindAction("Sprint", IE_Released, this, &ACaptureTheFlagCharacter::Server_StopRun);
+
+    if (GetCharacterPlayerState())
+        GetCharacterPlayerState()->SetPlayerName(PlayerName);
 }
 
 void ACaptureTheFlagCharacter::ApplyDamage(AActor* DamageCauser)
@@ -205,6 +337,23 @@ void ACaptureTheFlagCharacter::OnDeath(AActor* KilledBy)
     //    DetachFromControllerPendingDestroy();
     //}
 
+    if (Flag != nullptr)
+    {
+        Flag->SetState(ECaptureFlagState::InBase, this);
+        Flag = nullptr;
+    }
+
+    if (GetLocalRole() == ROLE_Authority)
+    {
+        if (PlayerTeam == 0)
+        {
+            GetGameState()->TeamOneSize--;
+        }
+        else
+        {
+            GetGameState()->TeamTwoSize--;
+        }
+    }
 }
 
 void ACaptureTheFlagCharacter::NMC_OnClientDeath_Implementation()
@@ -224,12 +373,12 @@ void ACaptureTheFlagCharacter::NMC_OnClientDeath_Implementation()
 
 void ACaptureTheFlagCharacter::Respawn()
 {
-    //if (GetLocalRole() == ROLE_Authority)
+    if (GetLocalRole() == ROLE_Authority)
     {
         ACaptureTheFlagGameMode* GM = Cast<ACaptureTheFlagGameMode>(GetWorld()->GetAuthGameMode());
         if (GM != nullptr)
         {
-            GM->RespawnPlayer(Cast<APlayerController>(GetController()));
+            GM->RespawnPlayer(Cast<APlayerController>(GetController()), PlayerTeam, NetIndex);
             Destroy();
         }
     }
@@ -479,6 +628,21 @@ void ACaptureTheFlagCharacter::Server_StopRun_Implementation()
     }
 }
 
+class ACaptureTheFlagGameState* ACaptureTheFlagCharacter::GetGameState()
+{
+    return Cast<ACaptureTheFlagGameState>(GetWorld()->GetGameState());
+}
+
+ACaptureTheFlagPlayerState* ACaptureTheFlagCharacter::GetCharacterPlayerState()
+{
+    return Cast<class ACaptureTheFlagPlayerState>(GetPlayerState());
+}
+
+void ACaptureTheFlagCharacter::SetCarriedFlag(AActor* flag)
+{
+    Flag = Cast<AFlag>(flag);
+}
+
 void ACaptureTheFlagCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -486,4 +650,18 @@ void ACaptureTheFlagCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProper
     DOREPLIFETIME(ACaptureTheFlagCharacter, bIsAiming);
     DOREPLIFETIME(ACaptureTheFlagCharacter, bIsRunning);
     DOREPLIFETIME(ACaptureTheFlagCharacter, bIsCrouching);
+
+    DOREPLIFETIME(ACaptureTheFlagCharacter, PlayerName);
+    DOREPLIFETIME(ACaptureTheFlagCharacter, PlayerTeam);
+    DOREPLIFETIME(ACaptureTheFlagCharacter, NetIndex);
+
+    DOREPLIFETIME(ACaptureTheFlagCharacter, TeamOneCount);
+    DOREPLIFETIME(ACaptureTheFlagCharacter, TeamTwoCount);
+    DOREPLIFETIME(ACaptureTheFlagCharacter, TeamOneScore);
+    DOREPLIFETIME(ACaptureTheFlagCharacter, TeamTwoScore);
+    DOREPLIFETIME(ACaptureTheFlagCharacter, PostBeginPlayDelay);
+
+    DOREPLIFETIME(ACaptureTheFlagCharacter, DefaultTPMaterials);
+    DOREPLIFETIME(ACaptureTheFlagCharacter, Flag);
+
 }

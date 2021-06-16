@@ -24,6 +24,9 @@ public:
 
     void RespawnPlayer(APlayerController* NewPlayer, int playerTeam, int NetIndex);
 
+    UFUNCTION(Reliable, NetMulticast)
+        void AddScore(int team);
+
 private:
     void HandleNewPlayer(APlayerController* NewPlayer);
 

@@ -22,4 +22,6 @@ public:
 
     // Update HUD for Health Bar
     virtual void UpdateHealthBar();
+
+    virtual void UpdateTeamScore();
 };

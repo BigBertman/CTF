@@ -5,6 +5,8 @@
 #include "Components/StaticMeshComponent.h"
 #include "../Characters/CaptureTheFlagCharacter.h"
 #include "Net/UnrealNetwork.h"
+#include "FlagBase.h"
+#include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
 
 // Sets default values
 AFlag::AFlag()
@@ -23,7 +25,6 @@ AFlag::AFlag()
 
     SetReplicates(true);
     SetReplicateMovement(true);
-
 }
 
 // Called when the game starts or when spawned
@@ -34,6 +35,7 @@ void AFlag::BeginPlay()
     if (GetLocalRole() == ROLE_Authority)
     {
         OnActorBeginOverlap.AddDynamic(this, &AFlag::OnOverlapBegin);
+        SetState(ECaptureFlagState::InBase, nullptr);
     }
 }
 
@@ -104,7 +106,48 @@ void AFlag::SetState(ECaptureFlagState NewState, AActor* Pawn)
 
     case ECaptureFlagState::InBase:
     {
-        SetActorTransform(FTransform(FRotator(0, 0, 0), FVector(-420.0, -520.0, 500.0), FVector(1, 1, 1)));
+        UWorld* World = GetWorld();
+
+        if (World != nullptr)
+        {
+            TArray<AActor*> FlagBaseArray;
+            UGameplayStatics::GetAllActorsOfClass(GetWorld(), AFlagBase::StaticClass(), FlagBaseArray);
+
+            for (AActor* FlagBase : FlagBaseArray)
+            {
+                AFlagBase* FB = Cast<AFlagBase>(FlagBase);
+
+                if (FB != nullptr)
+                {
+                    if (TeamFlag == 0)
+                    {
+                        if (FB->ActorHasTag("RedBase"))
+                        {
+                            FRotator SpawnRotation = FB->GetActorRotation();
+                            FVector SpawnLocation = FB->GetActorLocation();
+                            SpawnLocation.Z += 10.0f;
+
+                            SetActorLocation(SpawnLocation);
+                            SetActorRotation(SpawnRotation);
+                        }
+                    }
+
+                    if (TeamFlag == 1)
+                    {
+                        if (FB->ActorHasTag("BlueBase"))
+                        {
+                            FRotator SpawnRotation = FB->GetActorRotation();
+                            FVector SpawnLocation = FB->GetActorLocation();
+                            SpawnLocation.Z += 10.0f;
+
+                            SetActorLocation(SpawnLocation);
+                            SetActorRotation(SpawnRotation);
+                        }
+                    }
+                }
+            }
+        }
+
         NewState = ECaptureFlagState::Loose;
         CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
         break;
@@ -126,7 +169,14 @@ void AFlag::OnOverlapBegin(AActor* OverlappedActor, AActor* OtherActor)
     {
         if (State == ECaptureFlagState::Loose)
         {
-            SetState(ECaptureFlagState::Carried, OtherActor);
+            ACaptureTheFlagCharacter* Player = Cast<ACaptureTheFlagCharacter>(OtherActor);
+            if (Player != nullptr)
+            {
+                if (Player->PlayerTeam != TeamFlag)
+                {
+                    SetState(ECaptureFlagState::Carried, OtherActor);
+                }
+            }
         }
     }
 }
@@ -136,4 +186,5 @@ void AFlag::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimePro
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
     DOREPLIFETIME(AFlag, State);
+    DOREPLIFETIME(AFlag, TeamFlag);
 }

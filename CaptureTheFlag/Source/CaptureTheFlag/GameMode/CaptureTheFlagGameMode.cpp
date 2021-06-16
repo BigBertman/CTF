@@ -69,7 +69,6 @@ void ACaptureTheFlagGameMode::RespawnPlayer(APlayerController* NewPlayer, int pl
     }
 }
 
-
 void ACaptureTheFlagGameMode::HandleNewPlayer(APlayerController* NewPlayer)
 {
     ACaptureTheFlagCharacter* character = Cast<ACaptureTheFlagCharacter>(NewPlayer->GetPawn());
@@ -79,5 +78,30 @@ void ACaptureTheFlagGameMode::HandleNewPlayer(APlayerController* NewPlayer)
         GEngine->AddOnScreenDebugMessage(-1, 10, FColor::Blue, "CHaracter Logged In");
         character->AssignTeams();
         character->AssignNetIndex();
+    }
+}
+
+void ACaptureTheFlagGameMode::AddScore_Implementation(int team)
+{
+    if (GetLocalRole() == ROLE_Authority)
+    {
+        UWorld* World = GetWorld();
+
+        if (World != nullptr)
+        {
+            ACaptureTheFlagGameState* GS = World->GetGameState<ACaptureTheFlagGameState>();
+
+            switch (team)
+            {
+            case 0:
+                GS->TeamOneScore++;
+                break;
+            case 1:
+                GS->TeamTwoScore++;
+                break;
+            default:
+                break;
+            }
+        }
     }
 }

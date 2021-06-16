@@ -31,6 +31,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
         class  UShapeComponent* CollisionComponent;
 
+    UPROPERTY(EditAnywhere, Replicated)
+        int TeamFlag;
+
 protected:
     // Called when the game starts or when spawned
     virtual void BeginPlay() override;

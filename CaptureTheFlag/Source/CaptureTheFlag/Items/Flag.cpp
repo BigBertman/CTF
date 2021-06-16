@@ -125,7 +125,7 @@ void AFlag::SetState(ECaptureFlagState NewState, AActor* Pawn)
                         {
                             FRotator SpawnRotation = FB->GetActorRotation();
                             FVector SpawnLocation = FB->GetActorLocation();
-                            SpawnLocation.Z += 10.0f;
+                            SpawnLocation.Z += 130.0f;
 
                             SetActorLocation(SpawnLocation);
                             SetActorRotation(SpawnRotation);
@@ -138,7 +138,7 @@ void AFlag::SetState(ECaptureFlagState NewState, AActor* Pawn)
                         {
                             FRotator SpawnRotation = FB->GetActorRotation();
                             FVector SpawnLocation = FB->GetActorLocation();
-                            SpawnLocation.Z += 10.0f;
+                            SpawnLocation.Z += 130.0f;
 
                             SetActorLocation(SpawnLocation);
                             SetActorRotation(SpawnRotation);

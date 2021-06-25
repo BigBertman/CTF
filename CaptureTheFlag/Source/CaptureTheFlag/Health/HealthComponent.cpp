@@ -1,15 +1,14 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "HealthComponent.h"
 #include "Net/UnrealNetwork.h"
 
 // Sets default values for this component's properties
 UHealthComponent::UHealthComponent()
 {
-    // Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-    // off to improve performance if you don't need them.
+    // Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features off to improve performance if you don't need them.
     PrimaryComponentTick.bCanEverTick = true;
+
     bWantsInitializeComponent = true;
 
     // Set default values.
@@ -17,7 +16,7 @@ UHealthComponent::UHealthComponent()
     CurrentHealth = -1.0f;
 }
 
-
+// Called when initializing the component.
 void UHealthComponent::InitializeComponent()
 {
     Super::InitializeComponent();
@@ -33,6 +32,7 @@ void UHealthComponent::InitializeComponent()
     {
         CurrentHealth = MaximumHealth;
     }
+
     GetOwner()->SetCanBeDamaged(true);
     // Subscribe to the delegate in the attached actor.
     GetOwner()->OnTakeAnyDamage.AddDynamic(this, &UHealthComponent::OnTakeAnyDamage);
@@ -50,13 +50,13 @@ void UHealthComponent::BeginPlay()
     }
 }
 
-
 // Called every frame
 void UHealthComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
+// Called when the actor is damaged in any way
 void UHealthComponent::OnTakeAnyDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
 {
     // Check if alrady dead.
@@ -75,6 +75,7 @@ void UHealthComponent::OnTakeAnyDamage(AActor* DamagedActor, float Damage, const
     }
 }
 
+// Called when checking if player is dead
 bool UHealthComponent::IsDead() const
 {
     return CurrentHealth <= 0.0f;

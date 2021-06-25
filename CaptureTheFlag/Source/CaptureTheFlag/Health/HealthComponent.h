@@ -17,25 +17,37 @@ public:
     // Sets default values for this component's properties
     UHealthComponent();
 
+    /** Maximum Health */
     UPROPERTY(EditAnywhere)
         float MaximumHealth;
 
+    /** Current Health */
     UPROPERTY(EditAnywhere, Replicated)
         float CurrentHealth;
 
+    /** Death Signature */
     UPROPERTY(BlueprintAssignable)
         FOnDeathSignature OnDeath;
 
+    // Called when checking if player is dead
     UFUNCTION()
         bool IsDead() const;
 
 protected:
-
+    // Called when initializing the component.
     virtual void InitializeComponent() override;
 
     // Called when the game starts
     virtual void BeginPlay() override;
 
+    /**
+    * Called when the actor is damaged in any way.
+    * @param DamagedActor - Current Actor being affected
+    * @param Damage - How much damage to apply
+    * @param DamageType - Type of Damage
+    * @param InstigatedBy - Controller responsible for damage
+    * @param DamageCauser - The Actor that directly caused the damage
+    */
     UFUNCTION()
         void OnTakeAnyDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
 public:

@@ -34,7 +34,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
         class  UShapeComponent* CollisionComponent;
 
-    /** Team colour in numbers*/
+    /** Team colour in numbers */
     UPROPERTY(EditAnywhere, Replicated)
         int TeamFlag;
 
@@ -77,7 +77,7 @@ public:
         void OnOverlapBegin(AActor* OverlappedActor, AActor* OtherActor);
 private:
 
-    /** Captrue Flag State*/
+    /** Captrue Flag State */
     UPROPERTY(Replicated)
         ECaptureFlagState State;
 };

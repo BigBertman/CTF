@@ -15,7 +15,7 @@ public:
     // Sets default values for this actor's properties
     ABaseEvent();
 
-    /** Box Component*/
+    /** Box Component */
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
         class UBoxComponent* CollisionComponent;
 

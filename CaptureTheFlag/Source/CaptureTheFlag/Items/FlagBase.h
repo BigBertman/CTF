@@ -19,15 +19,15 @@ public:
     UPROPERTY(EditAnywhere)
         class UStaticMeshComponent* MeshComponent;
 
-    /** Red Flag Template*/
+    /** Red Flag Template */
     UPROPERTY(EditAnywhere, Replicated)
         TSubclassOf<class AFlag> RedFlag;
 
-    /** Blue Flag Template*/
+    /** Blue Flag Template */
     UPROPERTY(EditAnywhere, Replicated)
         TSubclassOf<class AFlag> BlueFlag;
 
-    /** Team base in numbers*/
+    /** Team base in numbers */
     UPROPERTY(EditAnywhere, Replicated)
         int TeamBase;
 

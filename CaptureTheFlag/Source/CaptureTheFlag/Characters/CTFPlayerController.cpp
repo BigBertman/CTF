@@ -70,6 +70,22 @@ void ACTFPlayerController::AcknowledgePossession(APawn* PossessedPawn)
         InputComponent->BindAxis("TurnRate", Character, &ACaptureTheFlagCharacter::TurnAtRate);
         InputComponent->BindAxis("LookUp", Character, &APawn::AddControllerPitchInput);
         InputComponent->BindAxis("LookUpRate", Character, &ACaptureTheFlagCharacter::LookUpAtRate);
+
+        // Bind fire event
+        InputComponent->BindAction("Fire", IE_Pressed, Character, &ACaptureTheFlagCharacter::OnFire);
+        InputComponent->BindAction("Fire", IE_Released, Character, &ACaptureTheFlagCharacter::StopFire);
+
+        // Bind crouch event
+        InputComponent->BindAction("Crouch", IE_Pressed, Character, &ACaptureTheFlagCharacter::Server_Crouch);
+        InputComponent->BindAction("Crouch", IE_Released, Character, &ACaptureTheFlagCharacter::Server_StopCrouch);
+
+        // Bind aim event
+        InputComponent->BindAction("Aim", IE_Pressed, Character, &ACaptureTheFlagCharacter::Aim);
+        InputComponent->BindAction("Aim", IE_Released, Character, &ACaptureTheFlagCharacter::StopAim);
+
+        // Bind Sprint event
+        InputComponent->BindAction("Sprint", IE_Pressed, Character, &ACaptureTheFlagCharacter::Server_Run);
+        InputComponent->BindAction("Sprint", IE_Released, Character, &ACaptureTheFlagCharacter::Server_StopRun);
     }
 }
 

@@ -24,9 +24,7 @@
 
 DEFINE_LOG_CATEGORY_STATIC(LogFPChar, Warning, All);
 
-//////////////////////////////////////////////////////////////////////////
-// ACaptureTheFlagCharacter
-
+// Sets default values for this character's properties
 ACaptureTheFlagCharacter::ACaptureTheFlagCharacter() :
     Health(nullptr),
     SkeletalMesh(nullptr),
@@ -37,63 +35,73 @@ ACaptureTheFlagCharacter::ACaptureTheFlagCharacter() :
     // Set size for collision capsule
     GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
 
-    GetCharacterMovement()->MaxWalkSpeed = 500.0f;
-    GetCharacterMovement()->bOrientRotationToMovement = false;
-    GetCharacterMovement()->GravityScale = 1.5f;
-    GetCharacterMovement()->JumpZVelocity = 620;
-    GetCharacterMovement()->MaxWalkSpeedCrouched = 200;
-    GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
-    GetCharacterMovement()->AirControl = 0.2f;
-    GetCharacterMovement()->SetIsReplicated(true);
-    GetCharacterMovement()->SetNetAddressable();
-
-    //GetMesh()->SetIsReplicated(true);
+    // Character Movement
+    {
+        GetCharacterMovement()->MaxWalkSpeed = 500.0f;
+        GetCharacterMovement()->bOrientRotationToMovement = false;
+        GetCharacterMovement()->GravityScale = 1.5f;
+        GetCharacterMovement()->JumpZVelocity = 620;
+        GetCharacterMovement()->MaxWalkSpeedCrouched = 200;
+        GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
+        GetCharacterMovement()->AirControl = 0.2f;
+        GetCharacterMovement()->SetIsReplicated(true);
+        GetCharacterMovement()->SetNetAddressable();
+    }
 
     // Set our turn rates for input
     BaseTurnRate = 45.f;
     BaseLookUpRate = 45.f;
 
-    OverShoulderCameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("ShoulderCameraBoom"));
-    OverShoulderCameraBoom->SetupAttachment(GetCapsuleComponent());
-    OverShoulderCameraBoom->bUsePawnControlRotation = false; // Fixed Camera
-    OverShoulderCameraBoom->TargetArmLength = 75.0f;
+    // Camera Boom
+    {
+        OverShoulderCameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("ShoulderCameraBoom"));
+        OverShoulderCameraBoom->SetupAttachment(GetCapsuleComponent());
+        OverShoulderCameraBoom->bUsePawnControlRotation = false; // Fixed Camera
+        OverShoulderCameraBoom->TargetArmLength = 75.0f;
+    }
 
-    // Create a CameraComponent	
-    OverShoulderCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ShoulderCamera"));
-    OverShoulderCamera->SetupAttachment(OverShoulderCameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
-    OverShoulderCamera->bUsePawnControlRotation = false;
+    // Camera Component
+    {
+        OverShoulderCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ShoulderCamera"));
+        OverShoulderCamera->SetupAttachment(OverShoulderCameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
+        OverShoulderCamera->bUsePawnControlRotation = false;
+    }
 
-    FP_MuzzleLocation = CreateDefaultSubobject<USceneComponent>(TEXT("MuzzleLocation"));
-    FP_MuzzleLocation->SetupAttachment(TP_Gun);
-    FP_MuzzleLocation->SetRelativeLocation(FVector(0.2f, 48.4f, -10.6f));
+    // Muzzle Location
+    {
+        FP_MuzzleLocation = CreateDefaultSubobject<USceneComponent>(TEXT("MuzzleLocation"));
+        FP_MuzzleLocation->SetupAttachment(TP_Gun);
+        FP_MuzzleLocation->SetRelativeLocation(FVector(0.2f, 48.4f, -10.6f));
+    }
 
     // Default offset from the character location for projectiles to spawn
     GunOffset = FVector(100.0f, 0.0f, 10.0f);
 
-    // Create a gun mesh component
-    TP_Gun = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("TP_Gun"));
-    TP_Gun->SetOwnerNoSee(false);
-    TP_Gun->bCastDynamicShadow = false;
-    TP_Gun->CastShadow = false;
-    TP_Gun->SetIsReplicated(true);
-    TP_Gun->SetupAttachment(RootComponent);
+    // Gun Mesh
+    {
+        TP_Gun = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("TP_Gun"));
+        TP_Gun->SetOwnerNoSee(false);
+        TP_Gun->bCastDynamicShadow = false;
+        TP_Gun->CastShadow = false;
+        TP_Gun->SetIsReplicated(true);
+        TP_Gun->SetupAttachment(RootComponent);
+        FireRate = 10.0f;
+    }
 
-    // Note: The ProjectileClass and the skeletal mesh/anim blueprints for Mesh1P, FP_Gun, and VR_Gun 
-    // are set in the derived blueprint asset named MyCharacter to avoid direct content references in C++.
-    Health = CreateDefaultSubobject<UHealthComponent>(TEXT("Health"));
-
-    FireRate = 10.0f;
-
-    SetCanBeDamaged(true);
+    // Health Component
+    {
+        Health = CreateDefaultSubobject<UHealthComponent>(TEXT("Health"));
+        SetCanBeDamaged(true);
+    }
 
     bReplicates = true;
     SetReplicates(true);
     SetReplicateMovement(true);
 
     Flag = nullptr;
-
 }
 
+// Callled after all components have been initialized
 void ACaptureTheFlagCharacter::PostInitializeComponents()
 {
     Super::PostInitializeComponents();
@@ -113,6 +121,7 @@ void ACaptureTheFlagCharacter::PostInitializeComponents()
     }
 }
 
+// Called when the owning Actor begins play
 void ACaptureTheFlagCharacter::BeginPlay()
 {
     // Call the base class  
@@ -159,6 +168,7 @@ void ACaptureTheFlagCharacter::UpdateAndCheckPlayer()
 
 }
 
+// Assigns a team to the player that logs in
 void ACaptureTheFlagCharacter::AssignTeams()
 {
     if (!GetGameState())
@@ -169,7 +179,7 @@ void ACaptureTheFlagCharacter::AssignTeams()
 
     if (TeamOneCount == TeamTwoCount)
     {
-        //IF The Net Mode is Dedicated Server
+        //If the Net Mode is Dedicated Server
         if (GetNetMode() == ENetMode::NM_DedicatedServer)
         {
             GetGameState()->TeamOneSize++;
@@ -203,11 +213,13 @@ void ACaptureTheFlagCharacter::AssignTeams()
     }
 }
 
+// Assigns a Network Index to the player that logs in
 void ACaptureTheFlagCharacter::AssignNetIndex()
 {
     NetIndex = GetGameState()->AuthorityGameMode->GetNumPlayers() - 1;
 }
 
+// Multicasts to all clients to assign the team color when player logs in
 void ACaptureTheFlagCharacter::Multicast_AssignTeamsColor_Implementation(int team, int index)
 {
     if (GetGameState() != nullptr)
@@ -244,6 +256,7 @@ void ACaptureTheFlagCharacter::Multicast_AssignTeamsColor_Implementation(int tea
     }
 }
 
+// Sets the material to the mesh
 void ACaptureTheFlagCharacter::SetMaterialToMesh(USkeletalMeshComponent* InMeshComp, const TArray<UMaterialInterface*>& InMaterials)
 {
     if (InMeshComp != nullptr && InMaterials.Num() > 0)
@@ -260,6 +273,7 @@ void ACaptureTheFlagCharacter::SetMaterialToMesh(USkeletalMeshComponent* InMeshC
     }
 }
 
+// Called every frame
 void ACaptureTheFlagCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
@@ -290,31 +304,17 @@ void ACaptureTheFlagCharacter::Tick(float DeltaTime)
     }
 }
 
-//////////////////////////////////////////////////////////////////////////
 // Input
-
 void ACaptureTheFlagCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
     // set up gameplay key bindings
     check(PlayerInputComponent);
 
-    // Bind fire event
-    PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ACaptureTheFlagCharacter::OnFire);
-    PlayerInputComponent->BindAction("Fire", IE_Released, this, &ACaptureTheFlagCharacter::StopFire);
-
-    PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &ACaptureTheFlagCharacter::Server_Crouch);
-    PlayerInputComponent->BindAction("Crouch", IE_Released, this, &ACaptureTheFlagCharacter::Server_StopCrouch);
-
-    PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &ACaptureTheFlagCharacter::Aim);
-    PlayerInputComponent->BindAction("Aim", IE_Released, this, &ACaptureTheFlagCharacter::StopAim);
-
-    PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &ACaptureTheFlagCharacter::Server_Run);
-    PlayerInputComponent->BindAction("Sprint", IE_Released, this, &ACaptureTheFlagCharacter::Server_StopRun);
-
     if (GetCharacterPlayerState())
         GetCharacterPlayerState()->SetPlayerName(PlayerName);
 }
 
+// Called when applying damage to player
 void ACaptureTheFlagCharacter::ApplyDamage(AActor* DamageCauser)
 {
     UE_LOG(LogTemp, Warning, TEXT("ACaptureTheFlagCharacter:: DamageCaused"));
@@ -324,7 +324,7 @@ void ACaptureTheFlagCharacter::ApplyDamage(AActor* DamageCauser)
     TakeDamage(10.0f, DamageEvent, nullptr, DamageCauser);
 }
 
-
+// Called when player dies
 void ACaptureTheFlagCharacter::OnDeath(AActor* KilledBy)
 {
     // Stop ticking while dead.
@@ -371,6 +371,7 @@ void ACaptureTheFlagCharacter::NMC_OnClientDeath_Implementation()
     GetWorldTimerManager().SetTimer(respawn, this, &ACaptureTheFlagCharacter::Respawn, 5.0f, false);
 }
 
+// Called when respawning player
 void ACaptureTheFlagCharacter::Respawn()
 {
     if (GetLocalRole() == ROLE_Authority)
@@ -384,6 +385,7 @@ void ACaptureTheFlagCharacter::Respawn()
     }
 }
 
+// Called when playing weapon animation
 void ACaptureTheFlagCharacter::NMC_PlayWeaponFiringAnimation_Implementation()
 {
     AnimationInstance->Montage_Play(FireAnimation);
@@ -400,9 +402,10 @@ bool ACaptureTheFlagCharacter::Server_Fire_Validate()
     return true;
 }
 
+// Called when firing weapon
 void ACaptureTheFlagCharacter::Server_Fire_Implementation()
 {
-    // try and fire a projectile
+    // Try and fire a projectile
     if (ProjectileClass != NULL)
     {
         UWorld* const World = GetWorld();
@@ -427,6 +430,7 @@ void ACaptureTheFlagCharacter::Server_Fire_Implementation()
     NMC_PlayWeaponFiringAnimation();
 }
 
+// Fires a projectile
 void ACaptureTheFlagCharacter::OnFire()
 {
     auto& TimerManager = GetWorld()->GetTimerManager();
@@ -436,6 +440,7 @@ void ACaptureTheFlagCharacter::OnFire()
     TimerManager.SetTimer(FireTimer, this, &ACaptureTheFlagCharacter::Server_Fire, 1.0f / FireRate, true, RemainingTime);
 }
 
+// Stops weapon firing
 void ACaptureTheFlagCharacter::StopFire()
 {
     auto& TimerManager = GetWorld()->GetTimerManager();
@@ -448,12 +453,14 @@ void ACaptureTheFlagCharacter::StopFire()
     }
 }
 
+// Called when clearing weapons fire timer
 void ACaptureTheFlagCharacter::ClearFireTimer()
 {
     // Clear the timer after a delay set in ReleaseTrigger() function.
     GetWorld()->GetTimerManager().ClearTimer(FireTimer);
 }
 
+// Handles moving forward/backward
 void ACaptureTheFlagCharacter::MoveForward(float Value)
 {
     if (Value != 0.0f)
@@ -478,6 +485,7 @@ void ACaptureTheFlagCharacter::NMC_MoveForward_Implementation(float Value)
     MoveForward(Value);
 }
 
+// Handles stafing movement, left and right
 void ACaptureTheFlagCharacter::MoveRight(float Value)
 {
     if (Value != 0.0f)
@@ -502,24 +510,28 @@ void ACaptureTheFlagCharacter::NMC_MoveRight_Implementation(float Value)
     MoveRight(Value);
 }
 
+// Called via input to turn at a given rate
 void ACaptureTheFlagCharacter::TurnAtRate(float Rate)
 {
-    // calculate delta for this frame from the rate information
+    // Calculate delta for this frame from the rate information
     AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
 }
 
+// Called via input to turn look up / down at a given rate
 void ACaptureTheFlagCharacter::LookUpAtRate(float Rate)
 {
-    // calculate delta for this frame from the rate information
+    // Calculate delta for this frame from the rate information
     AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
 }
 
+// Handles Crouching
 void ACaptureTheFlagCharacter::Crouching()
 {
     bIsCrouching = true;
     AnimationInstance->bIsCrouched = bIsCrouching;
 }
 
+// Stops Crouching
 void ACaptureTheFlagCharacter::StopCrouch()
 {
     bIsCrouching = false;
@@ -562,6 +574,7 @@ void ACaptureTheFlagCharacter::Server_StopCrouch_Implementation()
     }
 }
 
+// Handles Aiming 
 void ACaptureTheFlagCharacter::Aim()
 {
     bIsAiming = true;
@@ -569,6 +582,7 @@ void ACaptureTheFlagCharacter::Aim()
     OverShoulderCamera->SetFieldOfView(60);
 }
 
+// Stops Aiming
 void ACaptureTheFlagCharacter::StopAim()
 {
     bIsAiming = false;
@@ -576,6 +590,7 @@ void ACaptureTheFlagCharacter::StopAim()
     OverShoulderCamera->SetFieldOfView(90);
 }
 
+// Handles Running
 void ACaptureTheFlagCharacter::Run()
 {
     bIsRunning = true;
@@ -585,6 +600,7 @@ void ACaptureTheFlagCharacter::Run()
     GetCharacterMovement()->MaxWalkSpeed = 750.0f;
 }
 
+// Stops Running
 void ACaptureTheFlagCharacter::StopRun()
 {
     bIsRunning = false;
@@ -638,6 +654,7 @@ ACaptureTheFlagPlayerState* ACaptureTheFlagCharacter::GetCharacterPlayerState()
     return Cast<class ACaptureTheFlagPlayerState>(GetPlayerState());
 }
 
+// Called when setting carried flag
 void ACaptureTheFlagCharacter::SetCarriedFlag(AActor* flag)
 {
     Flag = Cast<AFlag>(flag);
@@ -663,5 +680,4 @@ void ACaptureTheFlagCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProper
 
     DOREPLIFETIME(ACaptureTheFlagCharacter, DefaultTPMaterials);
     DOREPLIFETIME(ACaptureTheFlagCharacter, Flag);
-
 }

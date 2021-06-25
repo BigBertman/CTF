@@ -9,11 +9,14 @@
 // Sets default values
 ABaseEvent::ABaseEvent()
 {
-    // Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+    // Set this actor to call Tick() every frame. You can turn this off to improve performance if you don't need it.
     PrimaryActorTick.bCanEverTick = true;
 
-    CollisionComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionComponent"));
-    RootComponent = CollisionComponent;
+    // Collision Component
+    {
+        CollisionComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionComponent"));
+        RootComponent = CollisionComponent;
+    }
 
     SetReplicates(true);
 }
@@ -35,6 +38,7 @@ void ABaseEvent::Tick(float DeltaTime)
     Super::Tick(DeltaTime);
 }
 
+// Called when something enters the box component
 void ABaseEvent::OnOverlapBegin(AActor* OverlappedActor, AActor* OtherActor)
 {
     if (OtherActor != nullptr)
@@ -47,12 +51,15 @@ void ABaseEvent::OnOverlapBegin(AActor* OverlappedActor, AActor* OtherActor)
 
             if (World != nullptr)
             {
-                ACaptureTheFlagGameMode* GS = World->GetAuthGameMode<ACaptureTheFlagGameMode>();
+                // Get GameMode from World
+                ACaptureTheFlagGameMode* GM = World->GetAuthGameMode<ACaptureTheFlagGameMode>();
 
-                if (GS != nullptr)
+                if (GM != nullptr)
                 {
-                    GS->AddScore(player->PlayerTeam);
+                    // Add Score to Players Team
+                    GM->AddScore(player->PlayerTeam);
 
+                    // Set Flag state to InBase
                     player->Flag->SetState(ECaptureFlagState::InBase, this);
 
                     player->Flag = nullptr;

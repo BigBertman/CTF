@@ -1,10 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "CTFPlayerController.h"
 #include "CaptureTheFlagCharacter.h"
 #include "../UI/PlayerWidget.h"
 
+// Called when the owning Actor begins play
 void ACTFPlayerController::BeginPlay()
 {
     Super::BeginPlay();
@@ -17,6 +17,7 @@ void ACTFPlayerController::BeginPlay()
     }
 }
 
+// Called when pawn is controlled
 void ACTFPlayerController::OnPossess(APawn* aPawn)
 {
     Super::OnPossess(aPawn);
@@ -24,6 +25,7 @@ void ACTFPlayerController::OnPossess(APawn* aPawn)
     GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, "AMyPlayerController::Possess: - " + aPawn->GetName());
 }
 
+// Called when pawn is not controlled
 void ACTFPlayerController::OnUnPossess()
 {
     Super::OnUnPossess();
@@ -35,11 +37,13 @@ void ACTFPlayerController::OnUnPossess()
     }
 }
 
+// Called when setting up custom input bindings.
 void ACTFPlayerController::SetupInputComponent()
 {
     Super::SetupInputComponent();
 }
 
+// Called when pawn is being controlled
 void ACTFPlayerController::AcknowledgePossession(APawn* PossessedPawn)
 {
     Super::AcknowledgePossession(PossessedPawn);
@@ -69,6 +73,7 @@ void ACTFPlayerController::AcknowledgePossession(APawn* PossessedPawn)
     }
 }
 
+// Called every frame
 void ACTFPlayerController::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);

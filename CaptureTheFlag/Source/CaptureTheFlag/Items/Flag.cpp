@@ -3,25 +3,31 @@
 #include "Flag.h"
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
+#include "FlagBase.h"
 #include "../Characters/CaptureTheFlagCharacter.h"
 #include "Net/UnrealNetwork.h"
-#include "FlagBase.h"
-#include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
 
 // Sets default values
 AFlag::AFlag()
     : State(ECaptureFlagState::Loose)
 {
-    // Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+    // Set this actor to call Tick() every frame. You can turn this off to improve performance if you don't need it.
     PrimaryActorTick.bCanEverTick = true;
 
-    CollisionComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionComponent"));
-    CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-    SetRootComponent(CollisionComponent);
+    // Collision Component
+    {
+        CollisionComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionComponent"));
+        CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+        SetRootComponent(CollisionComponent);
+    }
 
-    MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));
-    MeshComponent->SetupAttachment(RootComponent);
-    MeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    // Flag Mesh
+    {
+        MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));
+        MeshComponent->SetupAttachment(RootComponent);
+        MeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    }
 
     SetReplicates(true);
     SetReplicateMovement(true);
@@ -45,6 +51,7 @@ void AFlag::Tick(float DeltaTime)
     Super::Tick(DeltaTime);
 }
 
+// Callled after all components have been initialized
 void AFlag::PostInitializeComponents()
 {
     Super::PostInitializeComponents();
@@ -71,6 +78,7 @@ void AFlag::NMC_Disable_Implementation()
     }
 }
 
+// Called when enabling or disabling custom depth
 void AFlag::ShowSelect(bool selected)
 {
     if (Primitive != nullptr)
@@ -79,10 +87,12 @@ void AFlag::ShowSelect(bool selected)
     }
 }
 
+// Called when settting the flag states
 void AFlag::SetState(ECaptureFlagState NewState, AActor* Pawn)
 {
     switch (State)
     {
+        // If Flag is being pickup.
     case ECaptureFlagState::Carried:
     {
         CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
@@ -95,6 +105,7 @@ void AFlag::SetState(ECaptureFlagState NewState, AActor* Pawn)
 
     switch (NewState)
     {
+        // If Flag is being pickup by player.
     case ECaptureFlagState::Carried:
     {
         ACaptureTheFlagCharacter* Player = Cast<ACaptureTheFlagCharacter>(Pawn);
@@ -103,13 +114,14 @@ void AFlag::SetState(ECaptureFlagState NewState, AActor* Pawn)
         Player->SetCarriedFlag(this);
         break;
     }
-
+    // If Flag is returning to base.
     case ECaptureFlagState::InBase:
     {
         UWorld* World = GetWorld();
 
         if (World != nullptr)
         {
+            // Find all Flag Bases in map.
             TArray<AActor*> FlagBaseArray;
             UGameplayStatics::GetAllActorsOfClass(GetWorld(), AFlagBase::StaticClass(), FlagBaseArray);
 
@@ -119,27 +131,32 @@ void AFlag::SetState(ECaptureFlagState NewState, AActor* Pawn)
 
                 if (FB != nullptr)
                 {
+                    // If Flag is Red Team...
                     if (TeamFlag == 0)
                     {
                         if (FB->ActorHasTag("RedBase"))
                         {
-                            FRotator SpawnRotation = FB->GetActorRotation();
-                            FVector SpawnLocation = FB->GetActorLocation();
+                            // Return to Flag Base...
+                            FRotator SpawnRotation = FB->GetActorRotation(); // Spawn Rotation of Flag.
+                            FVector SpawnLocation = FB->GetActorLocation(); // Spawn Location of Flag.
                             SpawnLocation.Z += 130.0f;
 
+                            // Set Flag Location and Rotation.
                             SetActorLocation(SpawnLocation);
                             SetActorRotation(SpawnRotation);
                         }
                     }
-
+                    // If Flag is Blue Team...
                     if (TeamFlag == 1)
                     {
                         if (FB->ActorHasTag("BlueBase"))
                         {
-                            FRotator SpawnRotation = FB->GetActorRotation();
-                            FVector SpawnLocation = FB->GetActorLocation();
+                            // Return to Flag Base...
+                            FRotator SpawnRotation = FB->GetActorRotation(); // Spawn Rotation of Flag.
+                            FVector SpawnLocation = FB->GetActorLocation(); // Spawn Location of Flag.
                             SpawnLocation.Z += 130.0f;
 
+                            // Set Flag Location and Rotation.
                             SetActorLocation(SpawnLocation);
                             SetActorRotation(SpawnRotation);
                         }
@@ -147,26 +164,27 @@ void AFlag::SetState(ECaptureFlagState NewState, AActor* Pawn)
                 }
             }
         }
-
+        // Set Flag State to Loose
         NewState = ECaptureFlagState::Loose;
         CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
         break;
     }
-
+    // If Flag is returning to base.
     case ECaptureFlagState::Loose:
     {
         break;
     }
-
     }
 
     State = NewState;
 }
 
+// Called when something enters the sphere component
 void AFlag::OnOverlapBegin(AActor* OverlappedActor, AActor* OtherActor)
 {
     if (Cast<ACaptureTheFlagCharacter>(OtherActor) != nullptr)
     {
+        // If Flag State is Loose...
         if (State == ECaptureFlagState::Loose)
         {
             ACaptureTheFlagCharacter* Player = Cast<ACaptureTheFlagCharacter>(OtherActor);
@@ -174,6 +192,7 @@ void AFlag::OnOverlapBegin(AActor* OverlappedActor, AActor* OtherActor)
             {
                 if (Player->PlayerTeam != TeamFlag)
                 {
+                    // Set Flag State to Carried.
                     SetState(ECaptureFlagState::Carried, OtherActor);
                 }
             }

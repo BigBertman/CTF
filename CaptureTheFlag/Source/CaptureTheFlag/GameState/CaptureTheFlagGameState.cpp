@@ -1,9 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "CaptureTheFlagGameState.h"
 #include "Net/UnrealNetwork.h"
-
 
 void ACaptureTheFlagGameState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
 {

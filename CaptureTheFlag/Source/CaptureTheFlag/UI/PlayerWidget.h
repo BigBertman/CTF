@@ -15,6 +15,7 @@ class CAPTURETHEFLAG_API UPlayerWidget : public UUserWidget
     GENERATED_BODY()
 
 public:
+    // Called when initializing widget
     virtual bool Initialize() override;
 
     // Called every frame
@@ -23,5 +24,6 @@ public:
     // Update HUD for Health Bar
     virtual void UpdateHealthBar();
 
+    // Update HUD for Team Score
     virtual void UpdateTeamScore();
 };

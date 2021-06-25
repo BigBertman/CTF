@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "PlayerWidget.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
@@ -9,6 +8,7 @@
 #include "../Health/HealthComponent.h"
 #include "../GameState/CaptureTheFlagGameState.h"
 
+// Called when initializing widget
 bool UPlayerWidget::Initialize()
 {
     bool bResult = Super::Initialize();
@@ -35,6 +35,7 @@ bool UPlayerWidget::Initialize()
 void UPlayerWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
     Super::NativeTick(MyGeometry, InDeltaTime);
+
     UpdateHealthBar();
     UpdateTeamScore();
 }
@@ -46,17 +47,22 @@ void UPlayerWidget::UpdateHealthBar()
 
     ACaptureTheFlagCharacter* Character = Cast<ACaptureTheFlagCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
 
+    // Get player's maximum health
     float MaximumHealth = Character->GetHealth()->MaximumHealth;
+    // Get player's current health
     float CurrentHealth = Character->GetHealth()->CurrentHealth;
+
     if (Character != nullptr)
     {
         if (HealthBar != nullptr)
         {
+            // Set HealthBar Percent based on CurrentHealth / MaximumHealth
             HealthBar->SetPercent(CurrentHealth / MaximumHealth);
         }
     }
 }
 
+// Update HUD for Team Score
 void UPlayerWidget::UpdateTeamScore()
 {
     UWorld* World = GetWorld();

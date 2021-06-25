@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Bryson Bertuzzi, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -39,5 +39,4 @@ public:
 private:
     // Called when dealing with new players
     void HandleNewPlayer(APlayerController* NewPlayer);
-
 };

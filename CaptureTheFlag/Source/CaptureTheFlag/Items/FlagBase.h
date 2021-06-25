@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright Bryson Bertuzzi, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -44,5 +44,4 @@ protected:
 public:
     // Called every frame
     virtual void Tick(float DeltaTime) override;
-
 };

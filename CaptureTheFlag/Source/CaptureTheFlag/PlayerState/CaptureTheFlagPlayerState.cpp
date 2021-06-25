@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+// Copyright Bryson Bertuzzi, Inc. All Rights Reserved.
 
 #include "CaptureTheFlagPlayerState.h"
 #include "Net/UnrealNetwork.h"

@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Bryson Bertuzzi, Inc. All Rights Reserved.
 
 #include "CaptureTheFlagGameMode.h"
 #include "GameFramework/PlayerStart.h"

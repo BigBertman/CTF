@@ -15,20 +15,26 @@ public:
     // Sets default values for this actor's properties
     AFlagBase();
 
+    /** Mesh Component */
     UPROPERTY(EditAnywhere)
         class UStaticMeshComponent* MeshComponent;
 
+    /** Red Flag Template*/
     UPROPERTY(EditAnywhere, Replicated)
         TSubclassOf<class AFlag> RedFlag;
 
+    /** Blue Flag Template*/
     UPROPERTY(EditAnywhere, Replicated)
         TSubclassOf<class AFlag> BlueFlag;
 
+    /** Team base in numbers*/
     UPROPERTY(EditAnywhere, Replicated)
         int TeamBase;
 
-    void SpawnFlag(int team);
-
+    /**
+    * Called when reseting flag
+    * @param flag - flag being called
+    */
     void ResetFlag(class AFlag* flag);
 
 protected:

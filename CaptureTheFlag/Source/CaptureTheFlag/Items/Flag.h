@@ -34,7 +34,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
         class  UShapeComponent* CollisionComponent;
 
-    /** Team Color in numbers*/
+    /** Team colour in numbers*/
     UPROPERTY(EditAnywhere, Replicated)
         int TeamFlag;
 

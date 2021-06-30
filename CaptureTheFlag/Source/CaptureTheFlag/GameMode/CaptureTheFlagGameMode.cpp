@@ -19,21 +19,21 @@ ACaptureTheFlagGameMode::ACaptureTheFlagGameMode()
     }
 
     // Set default player controller class to our Blueprinted character
-    static ConstructorHelpers::FClassFinder<APlayerController> PlayerControllerClassFinder(TEXT("/Game/FirstPersonCPP/Blueprints/BP_PlayerController"));
+    static ConstructorHelpers::FClassFinder<APlayerController> PlayerControllerClassFinder(TEXT("/Game/FirstPersonCPP/Blueprints/Gamemode/BP_PlayerController"));
     if (PlayerControllerClassFinder.Class != NULL)
     {
         PlayerControllerClass = PlayerControllerClassFinder.Class;
     }
 
     // Set default game state class to our Blueprinted character
-    static ConstructorHelpers::FClassFinder<AGameStateBase> GameStateBPClass(TEXT("/Game/FirstPersonCPP/Blueprints/BP_CaptureTheFlagGameState"));
+    static ConstructorHelpers::FClassFinder<AGameStateBase> GameStateBPClass(TEXT("/Game/FirstPersonCPP/Blueprints/Gamemode/BP_CaptureTheFlagGameState"));
     if (GameStateBPClass.Class != NULL)
     {
         GameStateClass = GameStateBPClass.Class;
     }
 
     // Set default player state class to our Blueprinted character
-    static ConstructorHelpers::FClassFinder<APlayerState> PlayerStateBPClass(TEXT("/Game/FirstPersonCPP/Blueprints/BP_CaptureTheFlagPlayerState"));
+    static ConstructorHelpers::FClassFinder<APlayerState> PlayerStateBPClass(TEXT("/Game/FirstPersonCPP/Blueprints/Gamemode/BP_CaptureTheFlagPlayerState"));
     if (PlayerStateBPClass.Class != NULL)
     {
         PlayerStateClass = PlayerStateBPClass.Class;

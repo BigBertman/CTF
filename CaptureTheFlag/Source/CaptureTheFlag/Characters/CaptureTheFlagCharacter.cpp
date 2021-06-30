@@ -425,19 +425,21 @@ void ACaptureTheFlagCharacter::Server_Fire_Implementation()
 
             World->SpawnActor<ACaptureTheFlagProjectile>(ProjectileClass, MuzzleLocation, SpawnRotation, ActorSpawnParams);
         }
+        NMC_PlayWeaponFiringAnimation();
     }
-
-    NMC_PlayWeaponFiringAnimation();
 }
 
 // Fires a projectile
 void ACaptureTheFlagCharacter::OnFire()
 {
-    auto& TimerManager = GetWorld()->GetTimerManager();
+    if (bIsRunning == false)
+    {
+        auto& TimerManager = GetWorld()->GetTimerManager();
 
-    // Start the firing timer and use the remaining time of the previous timer.
-    float RemainingTime = FMath::Max(TimerManager.GetTimerRemaining(FireTimer), 0.0f);
-    TimerManager.SetTimer(FireTimer, this, &ACaptureTheFlagCharacter::Server_Fire, 1.0f / FireRate, true, RemainingTime);
+        // Start the firing timer and use the remaining time of the previous timer.
+        float RemainingTime = FMath::Max(TimerManager.GetTimerRemaining(FireTimer), 0.0f);
+        TimerManager.SetTimer(FireTimer, this, &ACaptureTheFlagCharacter::Server_Fire, 1.0f / FireRate, true, RemainingTime);
+    }
 }
 
 // Stops weapon firing

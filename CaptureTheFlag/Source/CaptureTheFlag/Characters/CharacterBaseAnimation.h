@@ -47,5 +47,6 @@ protected:
 
 protected:
     /** Owning Pawn */
-    APawn* OwningPawn;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+        APawn* OwningPawn;
 };

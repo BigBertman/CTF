@@ -56,8 +56,8 @@ void ACTFPlayerController::AcknowledgePossession(APawn* PossessedPawn)
     if (Character != nullptr)
     {
         // Bind jump events
-        InputComponent->BindAction("Jump", IE_Pressed, Character, &ACharacter::Jump);
-        InputComponent->BindAction("Jump", IE_Released, Character, &ACharacter::StopJumping);
+        InputComponent->BindAction("Jump", IE_Pressed, Character, &ACaptureTheFlagCharacter::Jump);
+        InputComponent->BindAction("Jump", IE_Released, Character, &ACaptureTheFlagCharacter::StopJumping);
 
         // Bind movement events
         InputComponent->BindAxis("MoveForward", Character, &ACaptureTheFlagCharacter::Server_MoveForward);

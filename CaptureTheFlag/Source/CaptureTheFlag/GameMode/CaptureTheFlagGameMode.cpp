@@ -58,6 +58,19 @@ void ACaptureTheFlagGameMode::RespawnPlayer(APlayerController* NewPlayer, int pl
 
     APawn* pawn = SpawnDefaultPawnFor(NewPlayer, PlayerStarts[0]);
 
+    for (AActor* it : PlayerStarts)
+    {
+        if (playerTeam == 0 && it->ActorHasTag("Red Base"))
+        {
+            pawn = SpawnDefaultPawnFor(NewPlayer, it);
+        }
+
+        if (playerTeam == 1 && it->ActorHasTag("Blue Base"))
+        {
+            pawn = SpawnDefaultPawnFor(NewPlayer, it);
+        }
+    }
+
     if (pawn != nullptr)
     {
         if (Cast<ACaptureTheFlagCharacter>(pawn))
@@ -82,7 +95,7 @@ void ACaptureTheFlagGameMode::HandleNewPlayer(APlayerController* NewPlayer)
 
     if (character != nullptr)
     {
-        GEngine->AddOnScreenDebugMessage(-1, 10, FColor::Blue, "CHaracter Logged In");
+        GEngine->AddOnScreenDebugMessage(-1, 10, FColor::Blue, "Character Logged In");
         character->AssignTeams();
         character->AssignNetIndex();
     }

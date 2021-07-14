@@ -22,7 +22,7 @@ void ACTFPlayerController::OnPossess(APawn* aPawn)
 {
     Super::OnPossess(aPawn);
 
-    GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, "AMyPlayerController::Possess: - " + aPawn->GetName());
+    GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, "ACTFPlayerController::Possess: - " + aPawn->GetName());
 }
 
 // Called when pawn is not controlled
@@ -33,7 +33,7 @@ void ACTFPlayerController::OnUnPossess()
     APawn* posessedPawn = Cast<APawn>(GetOwner());
     if (posessedPawn)
     {
-        GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, "AMyPlayerController::UnPossess: - " + GetOwner()->GetName());
+        GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, "ACTFPlayerController::UnPossess: - " + GetOwner()->GetName());
     }
 }
 

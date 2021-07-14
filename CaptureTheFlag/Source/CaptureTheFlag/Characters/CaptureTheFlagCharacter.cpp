@@ -19,8 +19,10 @@
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "../CaptureTheFlagHUD.h"
 #include "Net/UnrealNetwork.h"
 #include "Runtime/Engine/Classes/GameFramework/PlayerStart.h"
+#include "GameFramework/PlayerController.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogFPChar, Warning, All);
 
@@ -139,6 +141,9 @@ void ACaptureTheFlagCharacter::BeginPlay()
 
     GetWorldTimerManager().SetTimer(UpdateHandle, this, &ACaptureTheFlagCharacter::UpdateAndCheckPlayer, 0.03333f, true, 0.0f);
     GetWorldTimerManager().SetTimer(PostBeginPlayDelay, this, &ACaptureTheFlagCharacter::Server_PostBeginPlay, 5.0f, false);
+
+
+
 }
 
 bool ACaptureTheFlagCharacter::Server_PostBeginPlay_Validate()
@@ -411,19 +416,37 @@ void ACaptureTheFlagCharacter::Server_Fire_Implementation()
         UWorld* const World = GetWorld();
         if (World != NULL)
         {
-
             const FRotator SpawnRotation = GetControlRotation();
-            // MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
-            const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : GetActorLocation()) + SpawnRotation.RotateVector(GunOffset);
+            //const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : GetActorLocation()) + SpawnRotation.RotateVector(GunOffset);
 
             // Set Spawn Collision Handling Override
             FActorSpawnParameters ActorSpawnParams;
             ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+            ActorSpawnParams.Owner = this;
 
             // Spawn the projectile at the muzzle
             FVector MuzzleLocation = TP_Gun->GetSocketLocation("Muzzle");
 
-            World->SpawnActor<ACaptureTheFlagProjectile>(ProjectileClass, MuzzleLocation, SpawnRotation, ActorSpawnParams);
+            FVector viewDir = OverShoulderCamera->GetComponentRotation().Vector();
+            viewDir.Normalize();
+
+            FVector traceStart = MuzzleLocation;
+            FVector traceEnd = traceStart + viewDir * 5000.0f;
+
+            FCollisionQueryParams queryParams;
+            queryParams.bTraceComplex = true;
+            queryParams.AddIgnoredActor(this);
+            queryParams.bReturnPhysicalMaterial = false;
+
+            FHitResult Hit;
+            FVector projectileDirection;
+
+            if (World->LineTraceSingleByChannel(Hit, traceStart, traceEnd, ECC_Visibility, queryParams) == true)
+            {
+                projectileDirection = traceStart + viewDir;
+            }
+        
+            World->SpawnActor<ACaptureTheFlagProjectile>(ProjectileClass, projectileDirection, SpawnRotation, ActorSpawnParams);
         }
         NMC_PlayWeaponFiringAnimation();
     }

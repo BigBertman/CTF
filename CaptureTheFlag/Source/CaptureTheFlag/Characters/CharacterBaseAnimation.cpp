@@ -10,7 +10,9 @@ UCharacterBaseAnimation::UCharacterBaseAnimation() :
     OwningPawn(nullptr),
     bIsAiming(false),
     bIsRunning(false),
-    bIsCrouched(false)
+    bIsCrouched(false),
+    AimPitch(0.0f),
+    AimYaw(0.0f)
 {
 }
 
@@ -35,4 +37,6 @@ void UCharacterBaseAnimation::GetLifetimeReplicatedProps(TArray<FLifetimePropert
     DOREPLIFETIME(UCharacterBaseAnimation, bIsAiming);
     DOREPLIFETIME(UCharacterBaseAnimation, bIsRunning);
     DOREPLIFETIME(UCharacterBaseAnimation, bIsCrouched);
+    DOREPLIFETIME(UCharacterBaseAnimation, AimPitch);
+    DOREPLIFETIME(UCharacterBaseAnimation, AimYaw);
 }

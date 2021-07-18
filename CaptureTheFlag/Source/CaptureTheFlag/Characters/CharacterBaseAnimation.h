@@ -39,6 +39,12 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated)
         bool bIsCrouched;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated)
+        float AimPitch;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated)
+        float AimYaw;
+
 protected:
     UCharacterBaseAnimation();
 

@@ -182,6 +182,9 @@ public:
     UFUNCTION(NetMulticast, Reliable)
         void NMC_StopRun();
 
+    UFUNCTION(Server, Reliable, WithValidation)
+        void Server_AimRotate(float DeltaTime);
+
     /** Is Player Aiming */
     UPROPERTY(Replicated)
         bool bIsAiming = false;
@@ -193,6 +196,12 @@ public:
     /** Is Player Crouching */
     UPROPERTY(Replicated)
         bool bIsCrouching = false;
+
+    UPROPERTY(Replicated)
+        float AimPitch = 0.0f;
+
+    UPROPERTY(Replicated)
+        float AimYaw = 0.0f;
 
     // Called when respawning player
     void Respawn();

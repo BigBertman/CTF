@@ -23,6 +23,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Runtime/Engine/Classes/GameFramework/PlayerStart.h"
 #include "GameFramework/PlayerController.h"
+#include "Kismet/KismetMathLibrary.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogFPChar, Warning, All);
 
@@ -141,9 +142,6 @@ void ACaptureTheFlagCharacter::BeginPlay()
 
     GetWorldTimerManager().SetTimer(UpdateHandle, this, &ACaptureTheFlagCharacter::UpdateAndCheckPlayer, 0.03333f, true, 0.0f);
     GetWorldTimerManager().SetTimer(PostBeginPlayDelay, this, &ACaptureTheFlagCharacter::Server_PostBeginPlay, 5.0f, false);
-
-
-
 }
 
 bool ACaptureTheFlagCharacter::Server_PostBeginPlay_Validate()
@@ -170,7 +168,6 @@ void ACaptureTheFlagCharacter::UpdateAndCheckPlayer()
         TeamOneScore = GetGameState()->TeamOneScore;
         TeamTwoScore = GetGameState()->TeamTwoScore;
     }
-
 }
 
 // Assigns a team to the player that logs in
@@ -290,6 +287,9 @@ void ACaptureTheFlagCharacter::Tick(float DeltaTime)
     AnimationInstance->bIsMoving = bIsMoving;
     AnimationInstance->MovementSpeed = bIsMoving ? CurrentSpeed : 0.0f;
 
+    Server_AimRotate(DeltaTime);
+
+
     // Set animation strafing rotation paremeter.
     FVector MovementDirection = GetLastMovementInputVector();
     FVector CharacterDirection = GetActorForwardVector();
@@ -307,6 +307,30 @@ void ACaptureTheFlagCharacter::Tick(float DeltaTime)
 
         AnimationInstance->StrafingRotation = StrafingRotation;
     }
+}
+
+bool ACaptureTheFlagCharacter::Server_AimRotate_Validate(float DeltaTime)
+{
+    return true;
+}
+
+void ACaptureTheFlagCharacter::Server_AimRotate_Implementation(float DeltaTime)
+{
+    FRotator target = UKismetMathLibrary::NormalizedDeltaRotator(GetControlRotation(), GetActorRotation());
+    FRotator current = UKismetMathLibrary::MakeRotator(0.0f, AnimationInstance->AimPitch, AnimationInstance->AimYaw);
+    FRotator rotation = UKismetMathLibrary::RInterpTo(current, target, DeltaTime, 15.0f);
+
+    float Roll = 0.0f;
+    float Pitch = 0.0f;
+    float Yaw = 0.0f;
+
+    UKismetMathLibrary::BreakRotator(rotation, Roll, Pitch, Yaw);
+
+    AimPitch = UKismetMathLibrary::ClampAngle(Pitch, -90.0f, 90.0f);
+    AimYaw = UKismetMathLibrary::ClampAngle(Yaw, -90.0f, 90.0f);
+
+    AnimationInstance->AimPitch = AimPitch;
+    AnimationInstance->AimYaw = AimYaw;
 }
 
 // Input
@@ -445,7 +469,7 @@ void ACaptureTheFlagCharacter::Server_Fire_Implementation()
             {
                 projectileDirection = traceStart + viewDir;
             }
-        
+
             World->SpawnActor<ACaptureTheFlagProjectile>(ProjectileClass, projectileDirection, SpawnRotation, ActorSpawnParams);
         }
         NMC_PlayWeaponFiringAnimation();
@@ -692,6 +716,8 @@ void ACaptureTheFlagCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProper
     DOREPLIFETIME(ACaptureTheFlagCharacter, bIsAiming);
     DOREPLIFETIME(ACaptureTheFlagCharacter, bIsRunning);
     DOREPLIFETIME(ACaptureTheFlagCharacter, bIsCrouching);
+    DOREPLIFETIME(ACaptureTheFlagCharacter, AimPitch);
+    DOREPLIFETIME(ACaptureTheFlagCharacter, AimYaw);
 
     DOREPLIFETIME(ACaptureTheFlagCharacter, PlayerName);
     DOREPLIFETIME(ACaptureTheFlagCharacter, PlayerTeam);

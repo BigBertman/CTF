@@ -58,19 +58,6 @@ void ACaptureTheFlagGameMode::RespawnPlayer(APlayerController* NewPlayer, int pl
 
     APawn* pawn = SpawnDefaultPawnFor(NewPlayer, PlayerStarts[0]);
 
-    for (AActor* it : PlayerStarts)
-    {
-        if (playerTeam == 0 && it->ActorHasTag("Red Base"))
-        {
-            pawn = SpawnDefaultPawnFor(NewPlayer, it);
-        }
-
-        if (playerTeam == 1 && it->ActorHasTag("Blue Base"))
-        {
-            pawn = SpawnDefaultPawnFor(NewPlayer, it);
-        }
-    }
-
     if (pawn != nullptr)
     {
         if (Cast<ACaptureTheFlagCharacter>(pawn))
@@ -78,6 +65,25 @@ void ACaptureTheFlagGameMode::RespawnPlayer(APlayerController* NewPlayer, int pl
             Cast<ACaptureTheFlagCharacter>(pawn)->PlayerTeam = playerTeam;
 
             Cast<ACaptureTheFlagCharacter>(pawn)->NetIndex = NetIndex;
+
+            for (AActor* it : PlayerStarts)
+            {
+                if (it->ActorHasTag("Red Base"))
+                {
+                    if (playerTeam == 0)
+                    {
+                        pawn = SpawnDefaultPawnFor(NewPlayer, it);
+                    }
+                }
+
+                if (it->ActorHasTag("Blue Base"))
+                {
+                    if (playerTeam == 1)
+                    {
+                        pawn = SpawnDefaultPawnFor(NewPlayer, it);
+                    }
+                }
+            }
 
             // Set New Player Pawn to pawn
             NewPlayer->SetPawn(pawn);
@@ -87,7 +93,6 @@ void ACaptureTheFlagGameMode::RespawnPlayer(APlayerController* NewPlayer, int pl
         }
     }
 }
-
 // Called when dealing with new players
 void ACaptureTheFlagGameMode::HandleNewPlayer(APlayerController* NewPlayer)
 {

@@ -182,8 +182,16 @@ public:
     UFUNCTION(NetMulticast, Reliable)
         void NMC_StopRun();
 
-    UFUNCTION(Server, Reliable, WithValidation)
-        void Server_AimRotate(float DeltaTime);
+    //UFUNCTION(Server, Reliable, WithValidation)
+    //    void Server_AimRotate(float DeltaTime);
+
+    // Setter for Player Aim Offset Axis
+    UFUNCTION(Server, Reliable, WithValidation, BlueprintCallable)
+        void Server_SetOffsetAxis();
+
+    // Getter for Player Aim Offset Axis
+    UFUNCTION(BlueprintCallable)
+        FRotator GetOffsetAxis() { return OffsetAxis; }
 
     /** Is Player Aiming */
     UPROPERTY(Replicated)
@@ -197,11 +205,11 @@ public:
     UPROPERTY(Replicated)
         bool bIsCrouching = false;
 
-    UPROPERTY(Replicated)
-        float AimPitch = 0.0f;
+    //UPROPERTY(Replicated)
+    //    float AimPitch = 0.0f;
 
-    UPROPERTY(Replicated)
-        float AimYaw = 0.0f;
+    //UPROPERTY(Replicated)
+    //    float AimYaw = 0.0f;
 
     // Called when respawning player
     void Respawn();
@@ -301,5 +309,16 @@ private:
     /** Post Begin Delay Timer */
     UPROPERTY(Replicated)
         FTimerHandle PostBeginPlayDelay;
+
+    UPROPERTY(Replicated)
+        FRotator OffsetAxis;
+    //UPROPERTY(Replicated)
+    //    FRotator target;
+
+    //UPROPERTY(Replicated)
+    //    FRotator current;
+
+    //UPROPERTY(Replicated)
+    //    FRotator rotation;
 };
 

@@ -8,6 +8,9 @@
 #include "../Characters/CaptureTheFlagCharacter.h"
 #include "../GameState/CaptureTheFlagGameState.h"
 #include "../PlayerState/CaptureTheFlagPlayerState.h"
+#include "../Items/CTFPlayerStart.h"
+#include "EngineUtils.h"
+
 
 ACaptureTheFlagGameMode::ACaptureTheFlagGameMode()
 {
@@ -47,16 +50,13 @@ void ACaptureTheFlagGameMode::HandleStartingNewPlayer_Implementation(APlayerCont
 {
     Super::HandleStartingNewPlayer_Implementation(NewPlayer);
     HandleNewPlayer(NewPlayer);
+    ChoosePlayerStart(NewPlayer);
 }
 
 // Called when respawning player
 void ACaptureTheFlagGameMode::RespawnPlayer(APlayerController* NewPlayer, int playerTeam, int NetIndex)
 {
-    // Get All Player Starts in World
-    TArray<AActor*> PlayerStarts;
-    UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), PlayerStarts);
-
-    APawn* pawn = SpawnDefaultPawnFor(NewPlayer, PlayerStarts[0]);
+    APawn* pawn = SpawnDefaultPawnFor(NewPlayer, ChoosePlayerStart(NewPlayer));
 
     if (pawn != nullptr)
     {
@@ -66,25 +66,6 @@ void ACaptureTheFlagGameMode::RespawnPlayer(APlayerController* NewPlayer, int pl
 
             Cast<ACaptureTheFlagCharacter>(pawn)->NetIndex = NetIndex;
 
-            for (AActor* it : PlayerStarts)
-            {
-                if (it->ActorHasTag("Red Base"))
-                {
-                    if (playerTeam == 0)
-                    {
-                        pawn = SpawnDefaultPawnFor(NewPlayer, it);
-                    }
-                }
-
-                if (it->ActorHasTag("Blue Base"))
-                {
-                    if (playerTeam == 1)
-                    {
-                        pawn = SpawnDefaultPawnFor(NewPlayer, it);
-                    }
-                }
-            }
-
             // Set New Player Pawn to pawn
             NewPlayer->SetPawn(pawn);
 
@@ -93,6 +74,28 @@ void ACaptureTheFlagGameMode::RespawnPlayer(APlayerController* NewPlayer, int pl
         }
     }
 }
+AActor* ACaptureTheFlagGameMode::ChoosePlayerStart_Implementation(AController* Player)
+{
+    if (Player != nullptr)
+    {
+        ACaptureTheFlagPlayerState* PS = Cast<ACaptureTheFlagPlayerState>(Player->PlayerState);
+
+        if (PS != nullptr)
+        {
+            TArray<ACTFPlayerStart*> Starts;
+            for (TActorIterator<ACTFPlayerStart> it(GetWorld()); it; ++it)
+            {
+                if (it->bTeamBlue == PS->PlayerTeam)
+                {
+                    Starts.Add(*it);
+                }
+            }
+            return Starts[Starts.Num() - 1];
+        }
+    }
+    return NULL;
+}
+
 // Called when dealing with new players
 void ACaptureTheFlagGameMode::HandleNewPlayer(APlayerController* NewPlayer)
 {

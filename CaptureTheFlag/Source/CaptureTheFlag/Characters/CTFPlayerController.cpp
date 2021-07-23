@@ -3,6 +3,7 @@
 #include "CTFPlayerController.h"
 #include "CaptureTheFlagCharacter.h"
 #include "../UI/PlayerWidget.h"
+#include "../GameMode/CaptureTheFlagGameMode.h"
 
 // Called when the owning Actor begins play
 void ACTFPlayerController::BeginPlay()

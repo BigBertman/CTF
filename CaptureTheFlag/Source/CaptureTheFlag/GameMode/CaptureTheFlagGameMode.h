@@ -36,6 +36,11 @@ public:
     UFUNCTION(Reliable, NetMulticast)
         void AddScore(int team);
 
+
+    AActor* ChoosePlayerStart_Implementation(AController* Player) override;
+
+    bool ShouldSpawnAtStartSpot(AController* Player) override { return false; }
+
 private:
     // Called when dealing with new players
     void HandleNewPlayer(APlayerController* NewPlayer);

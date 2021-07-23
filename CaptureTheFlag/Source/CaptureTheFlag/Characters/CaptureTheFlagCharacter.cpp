@@ -287,7 +287,7 @@ void ACaptureTheFlagCharacter::Tick(float DeltaTime)
     AnimationInstance->bIsMoving = bIsMoving;
     AnimationInstance->MovementSpeed = bIsMoving ? CurrentSpeed : 0.0f;
 
-    Server_AimRotate(DeltaTime);
+    //Server_AimRotate(DeltaTime);
 
 
     // Set animation strafing rotation paremeter.
@@ -309,29 +309,43 @@ void ACaptureTheFlagCharacter::Tick(float DeltaTime)
     }
 }
 
-bool ACaptureTheFlagCharacter::Server_AimRotate_Validate(float DeltaTime)
+bool ACaptureTheFlagCharacter::Server_SetOffsetAxis_Validate()
 {
     return true;
 }
 
-void ACaptureTheFlagCharacter::Server_AimRotate_Implementation(float DeltaTime)
+// Setter for Player Aim Offset Axis
+void ACaptureTheFlagCharacter::Server_SetOffsetAxis_Implementation()
 {
-    FRotator target = UKismetMathLibrary::NormalizedDeltaRotator(GetControlRotation(), GetActorRotation());
-    FRotator current = UKismetMathLibrary::MakeRotator(0.0f, AnimationInstance->AimPitch, AnimationInstance->AimYaw);
-    FRotator rotation = UKismetMathLibrary::RInterpTo(current, target, DeltaTime, 15.0f);
-
-    float Roll = 0.0f;
-    float Pitch = 0.0f;
-    float Yaw = 0.0f;
-
-    UKismetMathLibrary::BreakRotator(rotation, Roll, Pitch, Yaw);
-
-    AimPitch = UKismetMathLibrary::ClampAngle(Pitch, -90.0f, 90.0f);
-    AimYaw = UKismetMathLibrary::ClampAngle(Yaw, -90.0f, 90.0f);
-
-    AnimationInstance->AimPitch = AimPitch;
-    AnimationInstance->AimYaw = AimYaw;
+    if (GetLocalRole() == ROLE_Authority)
+    {
+        OffsetAxis = UKismetMathLibrary::NormalizedDeltaRotator(GetControlRotation(), GetActorRotation());
+    }
 }
+
+//bool ACaptureTheFlagCharacter::Server_AimRotate_Validate(float DeltaTime)
+//{
+//    return true;
+//}
+
+//void ACaptureTheFlagCharacter::Server_AimRotate_Implementation(float DeltaTime)
+//{
+//    target = UKismetMathLibrary::NormalizedDeltaRotator(GetControlRotation(), GetActorRotation());
+//    current = UKismetMathLibrary::MakeRotator(0.0f, OffsetAxis.Pitch, OffsetAxis.Yaw);
+//    rotation = UKismetMathLibrary::RInterpTo(current, target, DeltaTime, 15.0f);
+//
+//    //float Roll = 0.0f;
+//    //float Pitch = 0.0f;
+//    //float Yaw = 0.0f;
+//
+//    //UKismetMathLibrary::BreakRotator(rotation, OffsetAxis.Roll, OffsetAxis.Pitch, OffsetAxis.Yaw);
+//
+//    OffsetAxis.Pitch = UKismetMathLibrary::ClampAngle(rotation.Pitch, -90.0f, 90.0f);
+//    OffsetAxis.Yaw = UKismetMathLibrary::ClampAngle(rotation.Yaw, -90.0f, 90.0f);
+//
+//    AnimationInstance->AimPitch = OffsetAxis.Pitch;
+//    AnimationInstance->AimYaw = OffsetAxis.Yaw;
+//}
 
 // Input
 void ACaptureTheFlagCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -716,8 +730,8 @@ void ACaptureTheFlagCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProper
     DOREPLIFETIME(ACaptureTheFlagCharacter, bIsAiming);
     DOREPLIFETIME(ACaptureTheFlagCharacter, bIsRunning);
     DOREPLIFETIME(ACaptureTheFlagCharacter, bIsCrouching);
-    DOREPLIFETIME(ACaptureTheFlagCharacter, AimPitch);
-    DOREPLIFETIME(ACaptureTheFlagCharacter, AimYaw);
+    //DOREPLIFETIME(ACaptureTheFlagCharacter, AimPitch);
+    //DOREPLIFETIME(ACaptureTheFlagCharacter, AimYaw);
 
     DOREPLIFETIME(ACaptureTheFlagCharacter, PlayerName);
     DOREPLIFETIME(ACaptureTheFlagCharacter, PlayerTeam);
@@ -731,4 +745,9 @@ void ACaptureTheFlagCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProper
 
     DOREPLIFETIME(ACaptureTheFlagCharacter, DefaultTPMaterials);
     DOREPLIFETIME(ACaptureTheFlagCharacter, Flag);
+
+    DOREPLIFETIME(ACaptureTheFlagCharacter, OffsetAxis);
+    //DOREPLIFETIME(ACaptureTheFlagCharacter, target);
+    //DOREPLIFETIME(ACaptureTheFlagCharacter, current);
+    //DOREPLIFETIME(ACaptureTheFlagCharacter, rotation);
 }
